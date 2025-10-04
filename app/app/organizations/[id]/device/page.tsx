@@ -2,18 +2,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-
-
 interface Device {
   id: string;
   name: string;
@@ -153,47 +141,6 @@ export default function OrganizationsIdDevice() {
     }
   };
 
-  // 🔹 Fetch report
-  const [report, setReport] = useState<Report[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
-  const [reportPin, setReportPin] = useState("");
-  const [reportStart, setReportStart] = useState("");
-  const [reportEnd, setReportEnd] = useState("");
-  const handleFetchReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDevice) return;
-
-    if (!reportPin) {
-      alert("Pin harus diisi.");
-      return;
-    }
-
-    setReport([]);
-    try {
-      let url = `${backendUrl}/organizations/${id}/devices/${selectedDevice.id}/report?pin=${reportPin}`;
-      if (reportStart) {
-        url += `&start=${new Date(reportStart).toISOString()}`;
-      }
-      if (reportEnd) {
-        url += `&end=${new Date(reportEnd).toISOString()}`;
-      }
-      const res = await fetch(url,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
-
-      const data = await res.json();
-      if (res.ok) {
-        setReport(data.data || []);
-      } else {
-        alert(data?.message || "Gagal mengambil report.");
-      }
-    } catch (err) {
-      console.error("Fetch report error:", err);
-      alert("Terjadi kesalahan jaringan/server");
-    }
-  };
   useEffect(() => {
     fetchDevices();
   }, []);
@@ -298,17 +245,6 @@ export default function OrganizationsIdDevice() {
                         Edit
                       </button>
                       <button
-                        className="btn btn-sm btn-info me-2 mt-1"
-                        data-bs-toggle="modal"
-                        data-bs-target="#reportModal"
-                        onClick={() => {
-                          setSelectedDevice(device);
-                          setReport([]);
-                        }}
-                      >
-                        Report
-                      </button>
-                      <button
                         className="btn btn-sm btn-danger me-2 mt-1"
                         onClick={() => handleDeleteDevice(device.id)}
                       >
@@ -369,122 +305,6 @@ export default function OrganizationsIdDevice() {
             </div>
           </div>
 
-          {/* MODAL REPORT */}
-          <div
-            className="modal fade"
-            id="reportModal"
-            tabIndex={-1}
-            aria-labelledby="reportModalLabel"
-            aria-hidden="true"
-          >
-            <div className="modal-dialog modal-lg">
-              <div className="modal-content">
-                <form onSubmit={handleFetchReport}>
-                  <div className="modal-header">
-                    <h5 className="modal-title">
-                      Report Device: {selectedDevice?.name}
-                    </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                    ></button>
-                  </div>
-
-                  <div className="modal-body">
-                    <div className="row mb-3">
-                      <div className="col">
-                        <label htmlFor="reportPin" className="form-label">Pin</label>
-                        <input
-                          id="reportPin"
-                          type="text"
-                          className="form-control"
-                          value={reportPin}
-                          onChange={(e) => setReportPin(e.target.value)}
-                        />
-                      </div>
-                      <div className="col">
-                        <label htmlFor="reportStart" className="form-label">Start Date</label>
-                        <input
-                          id="reportStart"
-                          type="datetime-local"
-                          className="form-control"
-                          value={reportStart}
-                          onChange={(e) => setReportStart(e.target.value)}
-                        />
-                      </div>
-                      <div className="col">
-                        <label htmlFor="reportEnd" className="form-label">End Date</label>
-                        <input
-                          id="reportEnd"
-                          type="datetime-local"
-                          className="form-control"
-                          value={reportEnd}
-                          onChange={(e) => setReportEnd(e.target.value)}
-                        />
-                      </div>
-
-                      <button type="submit" className="btn btn-primary mt-3">
-                        Fetch Report
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="modal-footer">
-                    {report.length > 0 ? (
-                      <>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <LineChart data={report}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              dataKey="time"
-                              tickFormatter={(timeStr) =>
-                                new Date(timeStr).toLocaleTimeString()
-                              }
-                            />
-                            <YAxis />
-                            <Tooltip
-                              labelFormatter={(label) =>
-                                new Date(label).toLocaleString()
-                              }
-                            />
-                            <Legend />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="#007bff"
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                        <table className="table table-bordered table-striped">
-                          <thead className="table-secondary">
-                            <tr>
-                              <th>Pin</th>
-                              <th>Value</th>
-                              <th>Time</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {report.map((r, i) => (
-                              <tr key={i+1}>
-                                <td>{r.pin}</td>
-                                <td>{r.value}</td>
-                                <td>{new Date(r.time).toLocaleString()}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </>
-                    ) : (
-                      <div className="alert alert-info">Tidak ada data.</div>
-                    )}
-                  </div>
-
-                </form>
-              </div>
-            </div>
-          </div>
         </>
       )}
     </div>

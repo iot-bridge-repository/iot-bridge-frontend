@@ -15,9 +15,9 @@ export default function AppLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-md p-4 flex justify-between">
+      <nav className="bg-white shadow-md p-4 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
         <div className="text-xl font-bold">IoT Bridge</div>
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4">
           <Link className="nav-link" href="/app">
             Dokumentasi
           </Link>

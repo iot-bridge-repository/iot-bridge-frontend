@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface Organization {
   id: string;
@@ -11,7 +10,6 @@ interface Organization {
 export default function Organizations() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
-  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [organizationsList, setOrganizationsList] = useState<Organization[]>([]);
@@ -106,7 +104,7 @@ export default function Organizations() {
           <li key={org.id} className="list-group-item">
             <button
               className="btn btn-link text-decoration-none"
-              onClick={() => router.push(`/app/organizations/${org.id}`)}
+              onClick={() => window.location.href = `organizations/${org.id}`}
             >
               {org.name}
             </button>

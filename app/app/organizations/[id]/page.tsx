@@ -2,7 +2,19 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { RadialBarChart, RadialBar, PolarAngleAxis } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  RadialBarChart, 
+  RadialBar, 
+  PolarAngleAxis 
+} from "recharts";
 
 interface Device {
   id: string;
@@ -25,6 +37,12 @@ interface WidgetBox {
 
 interface WsMessage {
   deviceId: string;
+  pin: string;
+  value: number;
+  time: string;
+}
+
+interface DeviceReport {
   pin: string;
   value: number;
   time: string;
@@ -210,6 +228,36 @@ export default function OrganizationsId() {
     }
   };
 
+  // 🔹 Fetch report
+  const [reports, setReports] = useState<Record<string, DeviceReport[]>>({}); 
+  const handleFetchReport = async (deviceId: string, pin: string) => {
+    try {
+      const res = await fetch(`${backendUrl}/organizations/${id}/devices/${deviceId}/report?pin=${pin}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      const resJson = await res.json();
+      if (res.ok) {
+        const key = `${deviceId}-${pin}`;
+        setReports((prev) => ({
+          ...prev,
+          [key]: resJson.data || [],
+        }));
+      } else {
+        alert(resJson?.message || "Fetch report gagal.");
+      }
+    } catch (err) {
+      console.error("Fetch report error:", err);
+      alert("Terjadi kesalahan pada server atau jaringan.");
+    }
+  };
+
+  const [reportWidget, setReportWidget] = useState<WidgetBox | null>(null);
+  const handleOpenReport = async (widget: WidgetBox) => {
+    setReportWidget(widget);
+    await handleFetchReport(widget.device_id, widget.pin);
+  };
+
   useEffect(() => {
     fetchDevicesList();
   }, []);
@@ -236,7 +284,6 @@ export default function OrganizationsId() {
 
     ws.onopen = () => {
       console.log("WebSocket connected");
-
       widgetsBoxes.forEach((widget) => {
         const subscribeMsg = {
           type: "subscribe",
@@ -249,8 +296,6 @@ export default function OrganizationsId() {
     ws.onmessage = (event) => {
       try {
         const data: WsMessage = JSON.parse(event.data);
-        console.log("WebSocket received message: ", data);
-
         insertRealTimeValueToWidgetsBoxes(data);
       } catch (err) {
         console.error("WebSocket received message error:", err);
@@ -261,6 +306,20 @@ export default function OrganizationsId() {
     ws.onclose = () => console.log("WebSocket closed");
 
     return () => ws.close();
+  }, []);
+
+  // Jika widgets baru muncul, bisa subscribe tanpa menutup WS
+  useEffect(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      widgetsBoxes.forEach((widget) => {
+        const subscribeMsg = {
+          type: "subscribe",
+          topic: `device-id/${widget.device_id}/pin/${widget.pin}`,
+        };
+        if (!wsRef.current) return;
+        wsRef.current.send(JSON.stringify(subscribeMsg));
+      });
+    }
   }, [widgetsBoxes]);
 
   if (loading) {
@@ -443,6 +502,15 @@ export default function OrganizationsId() {
                       Edit
                     </button>
 
+                    <button
+                      className="px-3 py-1 text-xs font-medium bg-white-500 text-dark rounded-lg border border-primary hover:bg-sky-600 transition"
+                      data-bs-toggle="modal"
+                      data-bs-target="#reportWidgetModal"
+                      onClick={() => handleOpenReport(w)}
+                    >
+                      Data Report
+                    </button>
+
                     <button 
                       className="px-3 py-1 text-xs font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
                       onClick={() => handleDeleteWidgetBox(w.device_id,w.id)}
@@ -623,6 +691,83 @@ export default function OrganizationsId() {
               </div>
             </div>
           </div>
+
+          {/* MODAL REPORT */}
+          <div
+            className="modal fade"
+            id="reportWidgetModal"
+            tabIndex={-1}
+            aria-labelledby="reportWidgetModalLabel"
+            aria-hidden="true"
+          >
+            <div className="modal-dialog modal-xl modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title" id="reportWidgetModalLabel">
+                    Data Report - {reportWidget?.name}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                    onClick={() => setReportWidget(null)}
+                  ></button>
+                </div>
+
+                <div className="modal-body">
+                  {reportWidget && (() => {
+                    const key = `${reportWidget.device_id}-${reportWidget.pin}`;
+                    const report = reports[key] || [];
+
+                    return report.length > 0 ? (
+                      <>
+                        {/* LINE CHART */}
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={report}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="time"
+                              tickFormatter={(timeStr) =>
+                                new Date(timeStr).toLocaleTimeString()
+                              }
+                            />
+                            <YAxis />
+                            <Tooltip
+                              labelFormatter={(label) =>
+                                new Date(label).toLocaleString()
+                              }
+                            />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke="#007bff"
+                              dot={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </>
+                    ) : (
+                      <div className="alert alert-info">Tidak ada data report.</div>
+                    );
+                  })()}
+                </div>
+
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                    onClick={() => setReportWidget(null)}
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </>
       ) : (
         <p>Tidak ada widget box</p>
