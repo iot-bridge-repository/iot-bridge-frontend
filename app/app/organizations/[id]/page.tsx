@@ -143,7 +143,7 @@ export default function OrganizationsId() {
       if (res.ok) {
         alert("Membuat widget box berhasil.");
         setWidgetsBoxes([]);
-        fetchWidgetsBoxesList(newWidget.deviceId);
+        devices.forEach((device) => { fetchWidgetsBoxesList(device.id) })
       } else {
         alert(resJson?.message || "Membuat widget box gagal.");
       }
@@ -229,10 +229,31 @@ export default function OrganizationsId() {
   };
 
   // 🔹 Fetch report
-  const [reports, setReports] = useState<Record<string, DeviceReport[]>>({}); 
-  const handleFetchReport = async (deviceId: string, pin: string) => {
+  const [reports, setReports] = useState<Record<string, any[]>>({});
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const formatDateToLocalInput = (date: Date) => {
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(date.getTime() - tzOffset)
+      .toISOString()
+      .slice(0, 16);
+    return localISOTime;
+  };
+  const handleFetchReport = async (
+    deviceId: string,
+    pin: string,
+    start?: string,
+    end?: string
+  ) => {
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/${deviceId}/report?pin=${pin}`, {
+      const url = new URL(
+        `${backendUrl}/organizations/${id}/devices/${deviceId}/report`
+      );
+      url.searchParams.append("pin", pin);
+      if (start) url.searchParams.append("start", start);
+      if (end) url.searchParams.append("end", end);
+
+      const res = await fetch(url.toString(), {
         headers: { Authorization: `Bearer ${authToken}` },
       });
 
@@ -252,7 +273,37 @@ export default function OrganizationsId() {
     }
   };
 
+  // Default: ambil data 1 jam terakhir saat modal dibuka
   const [reportWidget, setReportWidget] = useState<WidgetBox | null>(null);
+  useEffect(() => {
+    if (reportWidget) {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      const startISO = oneHourAgo.toISOString();
+      const endISO = now.toISOString();
+
+      setStartTime(formatDateToLocalInput(oneHourAgo));
+      setEndTime(formatDateToLocalInput(now));
+
+      handleFetchReport(reportWidget.device_id, reportWidget.pin, startISO, endISO);
+    }
+
+    return () => {
+      setStartTime("");
+      setEndTime("");
+    }
+  }, [reportWidget]);
+
+  const handleApplyTimeFilter = () => {
+    if (!reportWidget) return;
+    handleFetchReport(
+      reportWidget.device_id,
+      reportWidget.pin,
+      new Date(startTime).toISOString(),
+      new Date(endTime).toISOString()
+    );
+  };
+
   const handleOpenReport = async (widget: WidgetBox) => {
     setReportWidget(widget);
     await handleFetchReport(widget.device_id, widget.pin);
@@ -716,40 +767,70 @@ export default function OrganizationsId() {
                 </div>
 
                 <div className="modal-body">
+                  {/* Filter Waktu */}
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <div>
+                      <label htmlFor="startTimeDataReport" className="form-label">Mulai:</label>
+                      <input
+                        id="startTimeDataReport"
+                        type="datetime-local"
+                        className="form-control"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="endTimeDataReport" className="form-label">Selesai:</label>
+                      <input
+                        id="endTimeDataReport"
+                        type="datetime-local"
+                        className="form-control"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      className="btn btn-primary mt-4"
+                      onClick={handleApplyTimeFilter}
+                    >
+                      Terapkan
+                    </button>
+                  </div>
+
+                  {/* Chart */}
                   {reportWidget && (() => {
                     const key = `${reportWidget.device_id}-${reportWidget.pin}`;
                     const report = reports[key] || [];
 
                     return report.length > 0 ? (
-                      <>
-                        {/* LINE CHART */}
-                        <ResponsiveContainer width="100%" height={300}>
-                          <LineChart data={report}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              dataKey="time"
-                              tickFormatter={(timeStr) =>
-                                new Date(timeStr).toLocaleTimeString()
-                              }
-                            />
-                            <YAxis />
-                            <Tooltip
-                              labelFormatter={(label) =>
-                                new Date(label).toLocaleString()
-                              }
-                            />
-                            <Legend />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="#007bff"
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={report}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="time"
+                            tickFormatter={(timeStr) =>
+                              new Date(timeStr).toLocaleTimeString()
+                            }
+                          />
+                          <YAxis />
+                          <Tooltip
+                            labelFormatter={(label) =>
+                              new Date(label).toLocaleString()
+                            }
+                          />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            stroke="#007bff"
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
                     ) : (
-                      <div className="alert alert-info">Tidak ada data report.</div>
+                      <div className="alert alert-info mt-3">
+                        Tidak ada data report untuk rentang waktu ini.
+                      </div>
                     );
                   })()}
                 </div>
