@@ -17,18 +17,22 @@ interface Report {
 export default function OrganizationsIdDevice() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDevices = async () => {
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/search?name=`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/search?name=`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
@@ -50,25 +54,31 @@ export default function OrganizationsIdDevice() {
     e.preventDefault();
     try {
       const res = await fetch(`${backendUrl}/organizations/${id}/devices/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ name: newDeviceName }),
-        }
-      );
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ name: newDeviceName }),
+      });
 
       const resJson = await res.json();
       if (res.ok) {
         alert("Membuat device berhasil");
 
-        (document.getElementById("createDeviceModalCloseBtn") as HTMLButtonElement)?.click();
-        setDevices((prev) => [...prev, {
-          id: resJson.data.id,
-          name: resJson.data.name,
-          auth_code: resJson.data.auth_code
-        }]);
+        (
+          document.getElementById(
+            "createDeviceModalCloseBtn"
+          ) as HTMLButtonElement
+        )?.click();
+        setDevices((prev) => [
+          ...prev,
+          {
+            id: resJson.data.id,
+            name: resJson.data.name,
+            auth_code: resJson.data.auth_code,
+          },
+        ]);
       } else {
         alert(resJson?.message || "Membuat device gagal.");
       }
@@ -89,19 +99,26 @@ export default function OrganizationsIdDevice() {
     e.preventDefault();
 
     try {
-      const res = await fetch( `${backendUrl}/organizations/${id}/devices/${editDevice.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ name: editName }),
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/${editDevice.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ name: editName }),
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
         alert("Edit device berhasil");
-        (document.getElementById("editDeviceModalCloseBtn") as HTMLButtonElement)?.click();
+        (
+          document.getElementById(
+            "editDeviceModalCloseBtn"
+          ) as HTMLButtonElement
+        )?.click();
         setDevices((prev) =>
           prev.map((d) =>
             d.id === editDevice.id ? { ...d, name: editName } : d
@@ -121,12 +138,15 @@ export default function OrganizationsIdDevice() {
     if (!confirm("Anda yakin ingin menghapus device ini?")) return;
 
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/${deviceId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/${deviceId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
 
       if (res.ok) {
         alert("Menghapus device berhasil");
@@ -147,16 +167,18 @@ export default function OrganizationsIdDevice() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-3">HALAMAN DEVICE</h1>
-
       {/* BUTTON CREATE DEVICE */}
-      <button
-        className="btn btn-primary mb-3"
-        data-bs-toggle="modal"
-        data-bs-target="#createDeviceModal"
-      >
-        + Tambah Device
-      </button>
+      <div className="d-flex justify-content-center mb-3">
+        <button
+          type="button"
+          className="btn px-4 fw-semibold"
+          style={{ backgroundColor: "#1E3E62", color: "#FFFFFF" }}
+          data-bs-toggle="modal"
+          data-bs-target="#createDeviceModal"
+        >
+          + Tambah Perangkat
+        </button>
+      </div>
 
       {/* MODAL CREATE DEVICE */}
       <div
@@ -171,7 +193,7 @@ export default function OrganizationsIdDevice() {
             <form onSubmit={handleCreateDevice}>
               <div className="modal-header">
                 <h5 className="modal-title" id="createDeviceModalLabel">
-                  Tambah Device
+                  Tambah Perangkat
                 </h5>
                 <button
                   type="button"
@@ -183,7 +205,9 @@ export default function OrganizationsIdDevice() {
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <label htmlFor="deviceName" className="form-label">Nama Device</label>
+                  <label htmlFor="deviceName" className="form-label">
+                    Nama Device
+                  </label>
                   <input
                     type="text"
                     id="deviceName"
@@ -216,52 +240,65 @@ export default function OrganizationsIdDevice() {
       {/* LIST DEVICE */}
       {!loading && (
         <>
-          <table className="table table-bordered table-striped">
-            <thead className="table-dark">
-              <tr>
-                <th>#</th>
-                <th>Nama Device</th>
-                <th>Auth Code</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {devices.length > 0 ? (
-                devices.map((device, index) => (
-                  <tr key={device.id}>
-                    <td>{index + 1}</td>
-                    <td>{device.name}</td>
-                    <td>{device.auth_code}</td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-warning me-2 mt-1"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editDeviceModal"
-                        onClick={() => {
-                          setEditDevice(device);
-                          setEditName(device.name);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger me-2 mt-1"
-                        onClick={() => handleDeleteDevice(device.id)}
-                      >
-                        Hapus
-                      </button>
+          <div className="table-responsive">
+            <table className="table table-hover table-bordered align-middle">
+              <thead className="table-dark text-center">
+                <tr>
+                  <th style={{ width: "5%" }}>#</th>
+                  <th style={{ width: "35%" }}>Nama Perangkat</th>
+                  <th style={{ width: "35%" }}>Auth Code</th>
+                  <th style={{ width: "25%" }}>Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="text-center">
+                {devices.length > 0 ? (
+                  devices.map((device, index) => (
+                    <tr key={device.id}>
+                      <td>{index + 1}</td>
+                      <td>{device.name}</td>
+                      <td>
+                        <span className="truncate">{device.auth_code} </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(device.auth_code);
+                          }}
+                          className="p-1 rounded bg-gray-200 hover:bg-gray-300 text-sm text-gray-700"
+                          title="Salin auth code"
+                        >
+                          📋
+                        </button>
+                      </td>
+                      <td className="d-flex justify-content-center gap-2">
+                        <button
+                          className="btn btn-sm btn-outline-warning"
+                          data-bs-toggle="modal"
+                          data-bs-target="#editDeviceModal"
+                          onClick={() => {
+                            setEditDevice(device);
+                            setEditName(device.name);
+                          }}
+                        >
+                          <i className="bi bi-pencil-square me-1"></i>Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDeleteDevice(device.id)}
+                        >
+                          <i className="bi bi-trash me-1"></i>Hapus
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted py-3">
+                      Perangkat belum tersedia.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="text-center">
-                    Device belum tersedia.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {/* MODAL EDIT DEVICE */}
           <div
@@ -293,7 +330,10 @@ export default function OrganizationsIdDevice() {
                     />
                   </div>
                   <div className="modal-footer">
-                    <button className="btn btn-secondary" data-bs-dismiss="modal">
+                    <button
+                      className="btn btn-secondary"
+                      data-bs-dismiss="modal"
+                    >
                       Batal
                     </button>
                     <button type="submit" className="btn btn-success">
@@ -304,7 +344,6 @@ export default function OrganizationsIdDevice() {
               </div>
             </div>
           </div>
-
         </>
       )}
     </div>

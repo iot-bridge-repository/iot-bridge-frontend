@@ -11,9 +11,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  RadialBarChart, 
-  RadialBar, 
-  PolarAngleAxis 
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
 } from "recharts";
 
 interface Device {
@@ -52,8 +52,9 @@ export default function OrganizationsId() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
-  
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
   const [devices, setDevices] = useState<Device[]>([]);
   const [widgetsBoxes, setWidgetsBoxes] = useState<WidgetBox[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,11 +62,14 @@ export default function OrganizationsId() {
   // 🔹 Fetch devices
   const fetchDevicesList = async () => {
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/search?name=`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/search?name=`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
@@ -82,16 +86,26 @@ export default function OrganizationsId() {
   // 🔹 Fetch widgets boxes list
   const fetchWidgetsBoxesList = async (deviceId: string) => {
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/${deviceId}/widget-boxes/list`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/${deviceId}/widget-boxes/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
-        const insertDeviceToWidgetBoxes = resJson.data.map((w: WidgetBox) => ({ ...w, device_id: deviceId, device_name: devices.find((d) => d.id === deviceId)?.name }));
-        setWidgetsBoxes((prevWidgetsBoxes) => [...prevWidgetsBoxes, ...insertDeviceToWidgetBoxes]);
+        const insertDeviceToWidgetBoxes = resJson.data.map((w: WidgetBox) => ({
+          ...w,
+          device_id: deviceId,
+          device_name: devices.find((d) => d.id === deviceId)?.name,
+        }));
+        setWidgetsBoxes((prevWidgetsBoxes) => [
+          ...prevWidgetsBoxes,
+          ...insertDeviceToWidgetBoxes,
+        ]);
       } else {
         alert(resJson?.message || "Fetch widgets boxes list gagal.");
       }
@@ -134,7 +148,7 @@ export default function OrganizationsId() {
             min_value: newWidget.min_value,
             max_value: newWidget.max_value,
             default_value: newWidget.default_value,
-            unit: newWidget.unit
+            unit: newWidget.unit,
           }),
         }
       );
@@ -143,7 +157,9 @@ export default function OrganizationsId() {
       if (res.ok) {
         alert("Membuat widget box berhasil.");
         setWidgetsBoxes([]);
-        devices.forEach((device) => { fetchWidgetsBoxesList(device.id) })
+        devices.forEach((device) => {
+          fetchWidgetsBoxesList(device.id);
+        });
       } else {
         alert(resJson?.message || "Membuat widget box gagal.");
       }
@@ -159,7 +175,7 @@ export default function OrganizationsId() {
         max_value: "",
         default_value: "",
         unit: "",
-      })
+      });
     }
   };
 
@@ -167,12 +183,15 @@ export default function OrganizationsId() {
   const handleDeleteWidgetBox = async (deviceId: string, widgetId: string) => {
     if (confirm("Yakin ingin menghapus widget ini?")) {
       try {
-        const res = await fetch(`${backendUrl}/organizations/${id}/devices/${deviceId}/widget-boxes/${widgetId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
+        const res = await fetch(
+          `${backendUrl}/organizations/${id}/devices/${deviceId}/widget-boxes/${widgetId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
         if (res.ok) {
           setWidgetsBoxes((prev) => prev.filter((w) => w.id !== widgetId));
         } else {
@@ -232,6 +251,7 @@ export default function OrganizationsId() {
   const [reports, setReports] = useState<Record<string, any[]>>({});
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
+  const [fetchingReportLoading, setFetchingReportLoading] = useState(false);
   const formatDateToLocalInput = (date: Date) => {
     const tzOffset = date.getTimezoneOffset() * 60000;
     const localISOTime = new Date(date.getTime() - tzOffset)
@@ -246,6 +266,7 @@ export default function OrganizationsId() {
     end?: string
   ) => {
     try {
+      setFetchingReportLoading(true);
       const url = new URL(
         `${backendUrl}/organizations/${id}/devices/${deviceId}/report`
       );
@@ -270,6 +291,8 @@ export default function OrganizationsId() {
     } catch (err) {
       console.error("Fetch report error:", err);
       alert("Terjadi kesalahan pada server atau jaringan.");
+    } finally {
+      setFetchingReportLoading(false);
     }
   };
 
@@ -285,13 +308,18 @@ export default function OrganizationsId() {
       setStartTime(formatDateToLocalInput(oneHourAgo));
       setEndTime(formatDateToLocalInput(now));
 
-      handleFetchReport(reportWidget.device_id, reportWidget.pin, startISO, endISO);
+      handleFetchReport(
+        reportWidget.device_id,
+        reportWidget.pin,
+        startISO,
+        endISO
+      );
     }
 
     return () => {
       setStartTime("");
       setEndTime("");
-    }
+    };
   }, [reportWidget]);
 
   const handleApplyTimeFilter = () => {
@@ -314,7 +342,9 @@ export default function OrganizationsId() {
   }, []);
 
   useEffect(() => {
-    devices.forEach((device) => { fetchWidgetsBoxesList(device.id) })
+    devices.forEach((device) => {
+      fetchWidgetsBoxesList(device.id);
+    });
   }, [devices]);
 
   // 🔹 WebSocket
@@ -379,11 +409,11 @@ export default function OrganizationsId() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Widget Boxes</h1>
-        {/* BUTTON CREATE WIDGET */}
+      {/* BUTTON CREATE WIDGET */}
+      <div className="d-flex justify-content-center align-items-center mb-4">
         <button
-          className="btn btn-primary"
+          className="btn"
+          style={{ backgroundColor: "#1E3E62", color: "#FFFFFF" }}
           data-bs-toggle="modal"
           data-bs-target="#createWidgetModal"
         >
@@ -411,7 +441,9 @@ export default function OrganizationsId() {
             </div>
             <div className="modal-body">
               <div className="mb-3">
-                <label htmlFor="widgetBoxDeviceId" className="form-label">Device</label>
+                <label htmlFor="widgetBoxDeviceId" className="form-label">
+                  Perangkat
+                </label>
                 <select
                   id="widgetBoxDeviceId"
                   className="form-select"
@@ -420,7 +452,7 @@ export default function OrganizationsId() {
                     setNewWidget({ ...newWidget, deviceId: e.target.value })
                   }
                 >
-                  <option value="">-- Pilih Device --</option>
+                  <option value="">-- Pilih Perangkat --</option>
                   {devices.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name}
@@ -429,7 +461,9 @@ export default function OrganizationsId() {
                 </select>
               </div>
               <div className="mb-3">
-                <label htmlFor="widgetBoxName" className="form-label">Name</label>
+                <label htmlFor="widgetBoxName" className="form-label">
+                  Nama
+                </label>
                 <input
                   id="widgetBoxName"
                   type="text"
@@ -441,7 +475,9 @@ export default function OrganizationsId() {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="widgetBoxPin" className="form-label">Pin</label>
+                <label htmlFor="widgetBoxPin" className="form-label">
+                  Pin
+                </label>
                 <input
                   id="widgetBoxPin"
                   type="text"
@@ -453,7 +489,9 @@ export default function OrganizationsId() {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="widgetBoxMinValue" className="form-label">Min Value</label>
+                <label htmlFor="widgetBoxMinValue" className="form-label">
+                  Nilai Minimal
+                </label>
                 <input
                   id="widgetBoxMinValue"
                   type="number"
@@ -465,7 +503,9 @@ export default function OrganizationsId() {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="widgetBoxMaxValue" className="form-label">Max Value</label>
+                <label htmlFor="widgetBoxMaxValue" className="form-label">
+                  Nilai Maksimal
+                </label>
                 <input
                   id="widgetBoxMaxValue"
                   type="number"
@@ -477,7 +517,9 @@ export default function OrganizationsId() {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="widgetBoxDefaultValue" className="form-label">Default Value</label>
+                <label htmlFor="widgetBoxDefaultValue" className="form-label">
+                  Nilai Default (jika tidak ada data real-time)
+                </label>
                 <input
                   id="widgetBoxDefaultValue"
                   type="number"
@@ -492,7 +534,9 @@ export default function OrganizationsId() {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="widgetBoxUnit" className="form-label">Unit</label>
+                <label htmlFor="widgetBoxUnit" className="form-label">
+                  Unit
+                </label>
                 <input
                   id="widgetBoxUnit"
                   type="text"
@@ -508,10 +552,7 @@ export default function OrganizationsId() {
               </div>
             </div>
             <div className="modal-footer">
-              <button
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
+              <button className="btn btn-secondary" data-bs-dismiss="modal">
                 Batal
               </button>
               <button
@@ -519,7 +560,7 @@ export default function OrganizationsId() {
                 onClick={handleCreateWidget}
                 data-bs-dismiss="modal"
               >
-                Simpan
+                Tambah
               </button>
             </div>
           </div>
@@ -529,92 +570,113 @@ export default function OrganizationsId() {
       {/* WIDGET BOX LIST */}
       {widgetsBoxes.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-            {widgetsBoxes.map((w) => {
-              const min = w.min_value ?? 0;
-              const max = w.max_value ?? 100;
-              const value = w.realTimeValue ?? w.default_value ?? 0;
+          <div className="container py-4">
+            <div className="row g-4">
+              {widgetsBoxes.map((w) => {
+                const min = w.min_value ?? 0;
+                const max = w.max_value ?? 100;
+                const value = w.realTimeValue ?? w.default_value ?? 0;
 
-              const percent = Math.min(Math.max(value, min), max);
-              const data = [{ name: w.name, value: percent, fill: "#4F46E5" }];
+                const percent = Math.min(Math.max(value, min), max);
+                const data = [
+                  { name: w.name, value: percent, fill: "#4F46E5" },
+                ];
 
-              return (
-                <div 
-                  key={w.id}
-                  className="bg-white shadow-xl rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-2xl transition-shadow duration-300 relative"
-                >
-                  <div className="absolute top-4 right-4 flex gap-2">
-                    <button
-                      className="px-3 py-1 text-xs font-medium bg-white-500 text-dark rounded-lg border border-black hover:bg-gray-600 transition"
-                      data-bs-toggle="modal"
-                      data-bs-target="#editWidgetModal"
-                      onClick={() => setEditWidget(w)}
-                    >
-                      Edit
-                    </button>
+                return (
+                  <div key={w.id} className="col-12 col-md-6 col-lg-4 d-flex">
+                    <div className="card shadow-lg border-0 rounded-4 text-center position-relative overflow-hidden flex-fill">
+                      {/* Action Buttons (Top Right) */}
+                      <div className="position-absolute top-0 end-0 p-2 d-flex gap-2">
+                        <button
+                          className="btn btn-outline-dark btn-sm"
+                          data-bs-toggle="modal"
+                          data-bs-target="#editWidgetModal"
+                          onClick={() => setEditWidget(w)}
+                        >
+                          <i className="bi bi-pencil me-1"></i> Edit
+                        </button>
 
-                    <button
-                      className="px-3 py-1 text-xs font-medium bg-white-500 text-dark rounded-lg border border-primary hover:bg-sky-600 transition"
-                      data-bs-toggle="modal"
-                      data-bs-target="#reportWidgetModal"
-                      onClick={() => handleOpenReport(w)}
-                    >
-                      Data Report
-                    </button>
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          data-bs-toggle="modal"
+                          data-bs-target="#reportWidgetModal"
+                          onClick={() => handleOpenReport(w)}
+                        >
+                          <i className="bi bi-graph-up me-1"></i> Report
+                        </button>
 
-                    <button 
-                      className="px-3 py-1 text-xs font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-                      onClick={() => handleDeleteWidgetBox(w.device_id,w.id)}
-                    >
-                      Delete
-                    </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() =>
+                            handleDeleteWidgetBox(w.device_id, w.id)
+                          }
+                        >
+                          <i className="bi bi-trash me-1"></i> Delete
+                        </button>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="card-body py-5 px-3">
+                        <h5 className="card-title fw-bold text-dark mt-3 mb-3">
+                          {w.name}
+                        </h5>
+
+                        <div className="d-flex flex-column align-items-center mb-0">
+                          {/* Chart */}
+                          <RadialBarChart
+                            width={200}
+                            height={200}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius="70%"
+                            outerRadius="100%"
+                            barSize={14}
+                            data={data}
+                            startAngle={180}
+                            endAngle={0}
+                          >
+                            <PolarAngleAxis
+                              type="number"
+                              domain={[min, max]}
+                              angleAxisId={0}
+                              tick={false}
+                            />
+                            <RadialBar
+                              background
+                              dataKey="value"
+                              cornerRadius={15}
+                            />
+                          </RadialBarChart>
+
+                          {/* Min-Max Label */}
+                          <div className="d-flex justify-content-around text-secondary small fw-semibold px-4 mt-2 w-100">
+                            <span>{min}</span>
+                            <span>{max}</span>
+                          </div>
+                        </div>
+
+                        {/* Value */}
+                        <p className="fs-3 fw-bold text-dark mt-3 mb-1">
+                          {value}
+                          {w.unit ?? ""}
+                        </p>
+
+                        {/* Device Info */}
+                        <div className="text-muted small">
+                          <p className="mb-1">
+                            <span className="fw-semibold">Perangkat:</span>{" "}
+                            {w.device_name}
+                          </p>
+                          <p className="mb-0">
+                            <span className="fw-semibold">Pin:</span> {w.pin}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  <h3 className="text-lg font-bold text-gray-800 mt-5 mb-4 tracking-wide">
-                    {w.name}
-                  </h3>
-
-                  <RadialBarChart
-                    width={220}
-                    height={220}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="70%"
-                    outerRadius="100%"
-                    barSize={16}
-                    data={data}
-                    startAngle={180}
-                    endAngle={0}
-                  >
-                    <PolarAngleAxis
-                      type="number"
-                      domain={[min, max]}
-                      angleAxisId={0}
-                      tick={false}
-                    />
-                    <RadialBar background dataKey="value" cornerRadius={15} />
-                  </RadialBarChart>
-
-                  <div className="flex justify-between w-full px-6 mt-[-20px] text-gray-500 text-sm font-medium">
-                    <span>{min}</span>
-                    <span>{max}</span>
-                  </div>
-                  <p className="text-2xl font-extrabold text-gray-700 mt-3">
-                    {value}
-                    {w.unit ?? ""}
-                  </p>
-
-                  <div className="mt-2 text-center text-sm text-gray-500 space-y-1">
-                    <p>
-                      <span className="font-semibold">Device:</span> {w.device_name}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Pin:</span> {w.pin}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* MODAL EDIT WIDGET */}
@@ -640,31 +702,52 @@ export default function OrganizationsId() {
                   {editWidget && (
                     <>
                       <div className="mb-3">
-                        <label htmlFor="widgetBoxDeviceNameEdit" className="form-label">Name</label>
+                        <label
+                          htmlFor="widgetBoxDeviceNameEdit"
+                          className="form-label"
+                        >
+                          Nama
+                        </label>
                         <input
                           id="widgetBoxDeviceNameEdit"
                           type="text"
                           className="form-control"
                           value={editWidget.name}
                           onChange={(e) =>
-                            setEditWidget({ ...editWidget, name: e.target.value })
+                            setEditWidget({
+                              ...editWidget,
+                              name: e.target.value,
+                            })
                           }
                         />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="widgetBoxPinEdit" className="form-label">Pin</label>
+                        <label
+                          htmlFor="widgetBoxPinEdit"
+                          className="form-label"
+                        >
+                          Pin
+                        </label>
                         <input
                           id="widgetBoxPinEdit"
                           type="text"
                           className="form-control"
                           value={editWidget.pin}
                           onChange={(e) =>
-                            setEditWidget({ ...editWidget, pin: e.target.value })
+                            setEditWidget({
+                              ...editWidget,
+                              pin: e.target.value,
+                            })
                           }
                         />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="widgetBoxUnitEdit" className="form-label">Min Value</label>
+                        <label
+                          htmlFor="widgetBoxUnitEdit"
+                          className="form-label"
+                        >
+                          Nilai Minimal
+                        </label>
                         <input
                           id="widgetBoxUnitEdit"
                           type="number"
@@ -679,7 +762,12 @@ export default function OrganizationsId() {
                         />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="widgetBoxUnitEdit" className="form-label">Max Value</label>
+                        <label
+                          htmlFor="widgetBoxUnitEdit"
+                          className="form-label"
+                        >
+                          Nilai Maksimal
+                        </label>
                         <input
                           id="widgetBoxUnitEdit"
                           type="number"
@@ -694,7 +782,12 @@ export default function OrganizationsId() {
                         />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="widgetBoxUnitEdit" className="form-label">Default Value</label>
+                        <label
+                          htmlFor="widgetBoxUnitEdit"
+                          className="form-label"
+                        >
+                          Nilai Default (jika tidak ada data real-time)
+                        </label>
                         <input
                           id="widgetBoxUnitEdit"
                           type="number"
@@ -709,14 +802,22 @@ export default function OrganizationsId() {
                         />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="widgetBoxUnitEdit" className="form-label">Unit</label>
+                        <label
+                          htmlFor="widgetBoxUnitEdit"
+                          className="form-label"
+                        >
+                          Unit
+                        </label>
                         <input
                           id="widgetBoxUnitEdit"
                           type="text"
                           className="form-control"
                           value={editWidget.unit ?? ""}
                           onChange={(e) =>
-                            setEditWidget({ ...editWidget, unit: e.target.value })
+                            setEditWidget({
+                              ...editWidget,
+                              unit: e.target.value,
+                            })
                           }
                         />
                       </div>
@@ -755,7 +856,7 @@ export default function OrganizationsId() {
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title" id="reportWidgetModalLabel">
-                    Data Report - {reportWidget?.name}
+                    {reportWidget?.name} ({reportWidget?.device_name})
                   </h5>
                   <button
                     type="button"
@@ -768,9 +869,14 @@ export default function OrganizationsId() {
 
                 <div className="modal-body">
                   {/* Filter Waktu */}
-                  <div className="d-flex align-items-center gap-2 mb-3">
-                    <div>
-                      <label htmlFor="startTimeDataReport" className="form-label">Mulai:</label>
+                  <div className="row g-3 align-items-end mb-3">
+                    <div className="col-12 col-md-4">
+                      <label
+                        htmlFor="startTimeDataReport"
+                        className="form-label"
+                      >
+                        Mulai:
+                      </label>
                       <input
                         id="startTimeDataReport"
                         type="datetime-local"
@@ -779,8 +885,10 @@ export default function OrganizationsId() {
                         onChange={(e) => setStartTime(e.target.value)}
                       />
                     </div>
-                    <div>
-                      <label htmlFor="endTimeDataReport" className="form-label">Selesai:</label>
+                    <div className="col-12 col-md-4">
+                      <label htmlFor="endTimeDataReport" className="form-label">
+                        Selesai:
+                      </label>
                       <input
                         id="endTimeDataReport"
                         type="datetime-local"
@@ -789,50 +897,51 @@ export default function OrganizationsId() {
                         onChange={(e) => setEndTime(e.target.value)}
                       />
                     </div>
-                    <button
-                      className="btn btn-primary mt-4"
-                      onClick={handleApplyTimeFilter}
-                    >
-                      Terapkan
-                    </button>
+                    <div className="col-12 col-md-4 d-grid">
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleApplyTimeFilter}
+                        disabled={fetchingReportLoading}
+                      >
+                        {fetchingReportLoading ? (
+                          <output className="spinner-border spinner-border-sm me-2"></output>
+                        ) : (
+                          "Terapkan"
+                        )}
+                      </button>
+                    </div>
                   </div>
-
                   {/* Chart */}
-                  {reportWidget && (() => {
-                    const key = `${reportWidget.device_id}-${reportWidget.pin}`;
-                    const report = reports[key] || [];
+                  {reportWidget &&
+                    (() => {
+                      const key = `${reportWidget.device_id}-${reportWidget.pin}`;
+                      const report = reports[key] || [];
 
-                    return report.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={report}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis
-                            dataKey="time"
-                            tickFormatter={(timeStr) =>
-                              new Date(timeStr).toLocaleTimeString()
-                            }
-                          />
-                          <YAxis />
-                          <Tooltip
-                            labelFormatter={(label) =>
-                              new Date(label).toLocaleString()
-                            }
-                          />
-                          <Legend />
-                          <Line
-                            type="monotone"
-                            dataKey="value"
-                            stroke="#007bff"
-                            dot={false}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="alert alert-info mt-3">
-                        Tidak ada data report untuk rentang waktu ini.
-                      </div>
-                    );
-                  })()}
+                      return report.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={report}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <YAxis />
+                            <Tooltip
+                              labelFormatter={(label) =>
+                                new Date(label).toLocaleString()
+                              }
+                            />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke="#007bff"
+                              dot={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="alert alert-info mt-3">
+                          Tidak ada data report untuk rentang waktu ini.
+                        </div>
+                      );
+                    })()}
                 </div>
 
                 <div className="modal-footer">
@@ -848,7 +957,6 @@ export default function OrganizationsId() {
               </div>
             </div>
           </div>
-
         </>
       ) : (
         <p>Tidak ada widget box</p>

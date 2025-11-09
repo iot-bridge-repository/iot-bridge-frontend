@@ -25,11 +25,14 @@ interface NotificationEvents {
 export default function OrganizationsIdNotificationEvents() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notificationEventsList, setNotificationEventsList] = useState<NotificationEvents[]>([]);
+  const [notificationEventsList, setNotificationEventsList] = useState<
+    NotificationEvents[]
+  >([]);
 
   // 🔹 Fetch devices
   const fetchDevicesList = async () => {
@@ -87,7 +90,9 @@ export default function OrganizationsIdNotificationEvents() {
   };
 
   // 🔹 Create notification events
-  const [newNotificationEvents, setNewNotificationEvents] = useState<Partial<NotificationEvents>>({});
+  const [newNotificationEvents, setNewNotificationEvents] = useState<
+    Partial<NotificationEvents>
+  >({});
   const handleCreateNotificationEvents = async () => {
     if (!newNotificationEvents.device_id) return alert("Pilih device dulu!");
     try {
@@ -116,7 +121,8 @@ export default function OrganizationsIdNotificationEvents() {
           {
             ...resJson.data,
             device_name:
-              devices.find((d) => d.id === newNotificationEvents.device_id)?.name || "",
+              devices.find((d) => d.id === newNotificationEvents.device_id)
+                ?.name || "",
           },
         ]);
         setNewNotificationEvents({});
@@ -133,7 +139,8 @@ export default function OrganizationsIdNotificationEvents() {
   };
 
   // 🔹 Update notifcation events
-  const [editNotificationEvents, setEditNotificationEvents] = useState<NotificationEvents | null>(null);
+  const [editNotificationEvents, setEditNotificationEvents] =
+    useState<NotificationEvents | null>(null);
   const handleUpdateNotificationEvents = async () => {
     if (!editNotificationEvents) return;
 
@@ -160,7 +167,11 @@ export default function OrganizationsIdNotificationEvents() {
       const resJson = await res.json();
       if (res.ok) {
         setNotificationEventsList((prev) =>
-          prev.map((n) => (n.id === editNotificationEvents.id ? { ...editNotificationEvents } : n))
+          prev.map((n) =>
+            n.id === editNotificationEvents.id
+              ? { ...editNotificationEvents }
+              : n
+          )
         );
         setEditNotificationEvents(null);
         (window as any).bootstrap.Modal.getInstance(
@@ -180,10 +191,13 @@ export default function OrganizationsIdNotificationEvents() {
     if (!confirm(`Hapus event: ${event.subject}?`)) return;
 
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/${event.device_id}/notification-events/${event.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/${event.device_id}/notification-events/${event.id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
@@ -213,14 +227,15 @@ export default function OrganizationsIdNotificationEvents() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Notification Events</h1>
+      <div className="d-flex justify-content-center mb-3">
         <button
-          className="btn btn-primary"
+          type="button"
+          className="btn px-4 fw-semibold"
+          style={{ backgroundColor: "#1E3E62", color: "#FFFFFF" }}
           data-bs-toggle="modal"
           data-bs-target="#createNotificationModal"
         >
-          + Tambah Event
+          + Tambah Notification Event
         </button>
       </div>
 
@@ -305,7 +320,10 @@ export default function OrganizationsIdNotificationEvents() {
                   className="form-select mb-2"
                   value={newNotificationEvents.device_id || ""}
                   onChange={(e) =>
-                    setNewNotificationEvents({ ...newNotificationEvents, device_id: e.target.value })
+                    setNewNotificationEvents({
+                      ...newNotificationEvents,
+                      device_id: e.target.value,
+                    })
                   }
                 >
                   <option value="">Pilih Device</option>
@@ -321,7 +339,10 @@ export default function OrganizationsIdNotificationEvents() {
                   placeholder="Pin"
                   value={newNotificationEvents.pin || ""}
                   onChange={(e) =>
-                    setNewNotificationEvents({ ...newNotificationEvents, pin: e.target.value })
+                    setNewNotificationEvents({
+                      ...newNotificationEvents,
+                      pin: e.target.value,
+                    })
                   }
                 />
 
@@ -330,7 +351,10 @@ export default function OrganizationsIdNotificationEvents() {
                   placeholder="Subject"
                   value={newNotificationEvents.subject || ""}
                   onChange={(e) =>
-                    setNewNotificationEvents({ ...newNotificationEvents, subject: e.target.value })
+                    setNewNotificationEvents({
+                      ...newNotificationEvents,
+                      subject: e.target.value,
+                    })
                   }
                 />
 
@@ -339,7 +363,10 @@ export default function OrganizationsIdNotificationEvents() {
                   placeholder="Message"
                   value={newNotificationEvents.message || ""}
                   onChange={(e) =>
-                    setNewNotificationEvents({ ...newNotificationEvents, message: e.target.value })
+                    setNewNotificationEvents({
+                      ...newNotificationEvents,
+                      message: e.target.value,
+                    })
                   }
                 />
 
@@ -360,7 +387,11 @@ export default function OrganizationsIdNotificationEvents() {
                   className="form-select mb-2"
                   value={newNotificationEvents.comparison_type || ""}
                   onChange={(e) =>
-                    setNewNotificationEvents({ ...newNotificationEvents, comparison_type: e.target.value as NotificationEvents["comparison_type"] })
+                    setNewNotificationEvents({
+                      ...newNotificationEvents,
+                      comparison_type: e.target
+                        .value as NotificationEvents["comparison_type"],
+                    })
                   }
                 >
                   <option value="">Pilih Comparison Type</option>
@@ -376,7 +407,10 @@ export default function OrganizationsIdNotificationEvents() {
                   className="form-select"
                   value={newNotificationEvents.is_active ? "true" : "false"}
                   onChange={(e) =>
-                    setNewNotificationEvents({ ...newNotificationEvents, is_active: e.target.value === "true" })
+                    setNewNotificationEvents({
+                      ...newNotificationEvents,
+                      is_active: e.target.value === "true",
+                    })
                   }
                 >
                   <option value="">Pilih Status</option>
@@ -393,7 +427,10 @@ export default function OrganizationsIdNotificationEvents() {
               >
                 Batal
               </button>
-              <button className="btn btn-success" onClick={handleCreateNotificationEvents}>
+              <button
+                className="btn btn-success"
+                onClick={handleCreateNotificationEvents}
+              >
                 Simpan
               </button>
             </div>
@@ -427,7 +464,10 @@ export default function OrganizationsIdNotificationEvents() {
                     placeholder="Pin"
                     value={editNotificationEvents.pin}
                     onChange={(e) =>
-                      setEditNotificationEvents({ ...editNotificationEvents, pin: e.target.value })
+                      setEditNotificationEvents({
+                        ...editNotificationEvents,
+                        pin: e.target.value,
+                      })
                     }
                   />
 
@@ -436,7 +476,10 @@ export default function OrganizationsIdNotificationEvents() {
                     placeholder="Subject"
                     value={editNotificationEvents.subject}
                     onChange={(e) =>
-                      setEditNotificationEvents({ ...editNotificationEvents, subject: e.target.value })
+                      setEditNotificationEvents({
+                        ...editNotificationEvents,
+                        subject: e.target.value,
+                      })
                     }
                   />
 
@@ -445,7 +488,10 @@ export default function OrganizationsIdNotificationEvents() {
                     placeholder="Message"
                     value={editNotificationEvents.message}
                     onChange={(e) =>
-                      setEditNotificationEvents({ ...editNotificationEvents, message: e.target.value })
+                      setEditNotificationEvents({
+                        ...editNotificationEvents,
+                        message: e.target.value,
+                      })
                     }
                   />
 
@@ -468,7 +514,8 @@ export default function OrganizationsIdNotificationEvents() {
                     onChange={(e) =>
                       setEditNotificationEvents({
                         ...editNotificationEvents,
-                        comparison_type: e.target.value as NotificationEvents["comparison_type"],
+                        comparison_type: e.target
+                          .value as NotificationEvents["comparison_type"],
                       })
                     }
                   >
@@ -485,7 +532,10 @@ export default function OrganizationsIdNotificationEvents() {
                     className="form-select"
                     value={editNotificationEvents.is_active ? "true" : "false"}
                     onChange={(e) =>
-                      setEditNotificationEvents({ ...editNotificationEvents, is_active: e.target.value === "true" })
+                      setEditNotificationEvents({
+                        ...editNotificationEvents,
+                        is_active: e.target.value === "true",
+                      })
                     }
                   >
                     <option value="">Pilih Status</option>
@@ -503,14 +553,16 @@ export default function OrganizationsIdNotificationEvents() {
               >
                 Batal
               </button>
-              <button className="btn btn-warning" onClick={handleUpdateNotificationEvents}>
+              <button
+                className="btn btn-warning"
+                onClick={handleUpdateNotificationEvents}
+              >
                 Update
               </button>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 }

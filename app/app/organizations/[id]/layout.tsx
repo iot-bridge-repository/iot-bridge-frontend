@@ -16,7 +16,7 @@ export default function OrganizationsIdLayout({
 
   const links = [
     { href: `/app/organizations/${id}`, label: "Dashboard" },
-    { href: `/app/organizations/${id}/device`, label: "Devices" },
+    { href: `/app/organizations/${id}/device`, label: "Perangkat" },
     {
       href: `/app/organizations/${id}/notification-events`,
       label: "Notification Events",
@@ -85,7 +85,6 @@ export default function OrganizationsIdLayout({
         className="p-4 rounded shadow-sm"
         style={{
           backgroundColor: "#f8f9fa",
-          minHeight: "calc(100vh - 180px)",
         }}
       >
         {children}

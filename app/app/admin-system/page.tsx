@@ -37,9 +37,12 @@ interface UserDetail {
 
 export default function AdminSystem() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
-  const [organizationsList, setOrganizationsList] = useState<Organization[]>([]);
+  const [organizationsList, setOrganizationsList] = useState<Organization[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
 
   // 🔹 Fetch organizations
@@ -66,10 +69,14 @@ export default function AdminSystem() {
   };
 
   // 🔹 Verifikasi organisasi
-  const handleOrganizationVerification = async (orgId: string, newStatus: string) => {
-    const url = newStatus === "Verified"
-      ? `${backendUrl}/organizations/verify`
-      : `${backendUrl}/organizations/unverify`;
+  const handleOrganizationVerification = async (
+    orgId: string,
+    newStatus: string
+  ) => {
+    const url =
+      newStatus === "Verified"
+        ? `${backendUrl}/organizations/verify`
+        : `${backendUrl}/organizations/unverify`;
 
     try {
       const res = await fetch(url, {
@@ -98,7 +105,8 @@ export default function AdminSystem() {
   };
 
   // 🔹 Detail organisasi
-  const [organizationDetail, setOrganizationDetail] = useState<OrganizationDetail | null>(null);
+  const [organizationDetail, setOrganizationDetail] =
+    useState<OrganizationDetail | null>(null);
   const [showModal, setShowModal] = useState(false);
   const fetchOrganizationDetail = async (orgId: string) => {
     try {
@@ -167,7 +175,6 @@ export default function AdminSystem() {
     }
   };
 
-
   useEffect(() => {
     fetchOrganizations();
     fetchUsers();
@@ -185,8 +192,8 @@ export default function AdminSystem() {
         <>
           {/* ORGANIZATIONS TABLE */}
           <div className="table-responsive mb-5">
-            <table className="table table-bordered table-hover">
-              <thead className="table-dark">
+            <table className="table table-bordered table-striped table-hover align-middle">
+              <thead className="table-dark text-center">
                 <tr>
                   <th>Nama</th>
                   <th>Pembuat</th>
@@ -200,7 +207,7 @@ export default function AdminSystem() {
                   <tr key={org.id}>
                     <td>{org.name}</td>
                     <td>{org.creator_username}</td>
-                    <td>
+                    <td className="text-center">
                       <span
                         className={`badge ${
                           org.status === "Pending"
@@ -213,10 +220,10 @@ export default function AdminSystem() {
                         {org.status}
                       </span>
                     </td>
-                    <td className="d-flex gap-2">
+                    <td className="d-flex justify-content-center gap-2">
                       <button
                         type="button"
-                        className="btn btn-success"
+                        className="btn btn-sm btn-success"
                         onClick={() =>
                           handleOrganizationVerification(org.id, "Verified")
                         }
@@ -225,7 +232,7 @@ export default function AdminSystem() {
                       </button>
                       <button
                         type="button"
-                        className="btn btn-danger"
+                        className="btn btn-sm btn-danger"
                         onClick={() =>
                           handleOrganizationVerification(org.id, "Unverified")
                         }
@@ -233,10 +240,10 @@ export default function AdminSystem() {
                         Tolak
                       </button>
                     </td>
-                    <td>
+                    <td className="text-center">
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn btn-sm btn-primary"
                         onClick={() => fetchOrganizationDetail(org.id)}
                       >
                         Detail
@@ -251,17 +258,21 @@ export default function AdminSystem() {
           {/* MODAL ORGANIZATION DETAIL */}
           {showModal && organizationDetail && (
             <div
-              className="modal fade show"
-              style={{ display: "block", background: "rgba(0,0,0,0.5)" }}
+              className="modal fade show d-block"
+              style={{ background: "rgba(0,0,0,0.5)" }}
+              tabIndex={-1}
+              aria-modal="true"
+              role="dialog"
             >
-              <div className="modal-dialog modal-lg">
-                <div className="modal-content">
+              <div className="modal-dialog modal-lg modal-dialog-centered">
+                <div className="modal-content rounded shadow-sm">
                   <div className="modal-header">
-                    <h5 className="modal-title">Detail Organisasi</h5>
+                    <h5 className="modal-title">{organizationDetail.name}</h5>
                     <button
                       type="button"
                       className="btn-close"
                       onClick={() => setShowModal(false)}
+                      aria-label="Close"
                     ></button>
                   </div>
                   <div className="modal-body">
@@ -276,13 +287,24 @@ export default function AdminSystem() {
                       {organizationDetail.creator_username}
                     </p>
                     <p>
-                      <strong>Status:</strong> {organizationDetail.status}
+                      <strong>Status:</strong>{" "}
+                      <span
+                        className={`badge ${
+                          organizationDetail.status === "Pending"
+                            ? "bg-warning text-dark"
+                            : organizationDetail.status === "Verified"
+                            ? "bg-success"
+                            : "bg-secondary"
+                        }`}
+                      >
+                        {organizationDetail.status}
+                      </span>
                     </p>
 
                     <h6>Anggota:</h6>
-                    <ul>
+                    <ul className="list-group list-group-flush">
                       {organizationDetail.members.map((m, idx) => (
-                        <li key={idx+1}>
+                        <li key={idx} className="list-group-item py-1 px-2">
                           {m.username} - {m.role} ({m.status})
                         </li>
                       ))}
@@ -305,7 +327,7 @@ export default function AdminSystem() {
       )}
 
       {/* USERS TABLE */}
-      <h2 className="mb-4 mt-5">Daftar Users</h2>
+      <h2 className="mb-4 mt-5">Daftar Pengguna</h2>
 
       {loadingUsers ? (
         <p>Memuat data...</p>
@@ -313,8 +335,8 @@ export default function AdminSystem() {
         <p className="text-muted">Tidak ada user.</p>
       ) : (
         <>
-          <div className="table-responsive">
-            <table className="table table-bordered table-hover">
+          <div className="table-responsive mb-4">
+            <table className="table table-bordered table-striped table-hover align-middle text-center">
               <thead className="table-dark">
                 <tr>
                   <th>Username</th>
@@ -334,7 +356,7 @@ export default function AdminSystem() {
                     <td>
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn btn-sm btn-primary"
                         onClick={() => handleUserDetail(user.id)}
                       >
                         Detail
@@ -346,19 +368,26 @@ export default function AdminSystem() {
             </table>
           </div>
 
+          {/* MODAL DETAIL USER */}
           {showUserDetailModal && userDetail && (
             <div
-              className="modal fade show"
-              style={{ display: "block", background: "rgba(0,0,0,0.5)" }}
+              className="modal fade show d-block"
+              style={{ background: "rgba(0,0,0,0.5)" }}
+              tabIndex={-1}
+              aria-modal="true"
+              role="dialog"
             >
-              <div className="modal-dialog modal-lg">
-                <div className="modal-content">
+              <div className="modal-dialog modal-lg modal-dialog-centered">
+                <div className="modal-content rounded shadow-sm">
                   <div className="modal-header">
-                    <h5 className="modal-title">Detail User</h5>
+                    <h5 className="modal-title">
+                      {userDetail.username} - Detail User
+                    </h5>
                     <button
                       type="button"
                       className="btn-close"
                       onClick={() => setShowUserDetailModal(false)}
+                      aria-label="Close"
                     ></button>
                   </div>
                   <div className="modal-body">
@@ -373,10 +402,22 @@ export default function AdminSystem() {
                     </p>
 
                     <h6>Organisasi:</h6>
-                    <ul>
+                    <ul className="list-group list-group-flush">
                       {userDetail.organizationMember.map((org, idx) => (
-                        <li key={idx + 1}>
-                          {org.organization_name} {"-"} {org.status}
+                        <li
+                          key={idx + 1}
+                          className="list-group-item d-flex justify-content-between align-items-center py-1 px-2"
+                        >
+                          <span>{org.organization_name}</span>
+                          <span
+                            className={`badge ${
+                              org.status === "Accepted"
+                                ? "bg-success"
+                                : "bg-warning text-dark"
+                            }`}
+                          >
+                            {org.status}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -396,7 +437,6 @@ export default function AdminSystem() {
           )}
         </>
       )}
-
     </div>
   );
 }

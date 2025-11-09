@@ -27,26 +27,28 @@ interface DeviceReport {
 export default function OrganizationsIdDataReports() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reports, setReports] = useState<Record<string, DeviceReport[]>>({}); 
+  const [reports, setReports] = useState<Record<string, DeviceReport[]>>({});
 
   const fetchPinList = async (deviceId: string) => {
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/${deviceId}/pin-list`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/${deviceId}/pin-list`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
         setDevices((prev) =>
-          prev.map((d) =>
-            d.id === deviceId ? { ...d, pin: resJson.data } : d
-          )
+          prev.map((d) => (d.id === deviceId ? { ...d, pin: resJson.data } : d))
         );
       } else {
         alert(resJson?.message || "Fetch pins list gagal.");
@@ -58,11 +60,14 @@ export default function OrganizationsIdDataReports() {
 
   const fetchDevices = async () => {
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/search?name=`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/search?name=`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
@@ -82,9 +87,12 @@ export default function OrganizationsIdDataReports() {
 
   const fetchReport = async (deviceId: string, pin: string) => {
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/devices/${deviceId}/report?pin=${pin}`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/${deviceId}/report?pin=${pin}`,
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
 
       const data = await res.json();
       if (res.ok) {
@@ -110,10 +118,11 @@ export default function OrganizationsIdDataReports() {
   return (
     <div className="p-4">
       {devices.map((device) => (
-        <div key={device.id} className="mb-8 border p-4 rounded bg-white shadow">
-          <h2 className="text-lg font-semibold mb-2">
-            Device: {device.name}
-          </h2>
+        <div
+          key={device.id}
+          className="mb-8 border p-4 rounded bg-white shadow"
+        >
+          <h2 className="text-lg font-semibold mb-2">Device: {device.name}</h2>
 
           {device.pin && device.pin.length > 0 ? (
             device.pin.map((p) => {
@@ -136,12 +145,6 @@ export default function OrganizationsIdDataReports() {
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={reportData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="time"
-                          tickFormatter={(t) =>
-                            new Date(t).toLocaleTimeString()
-                          }
-                        />
                         <YAxis />
                         <Tooltip
                           labelFormatter={(label) =>

@@ -9,10 +9,13 @@ interface Organization {
 
 export default function Organizations() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
   const [loading, setLoading] = useState(true);
-  const [organizationsList, setOrganizationsList] = useState<Organization[]>([]);
+  const [organizationsList, setOrganizationsList] = useState<Organization[]>(
+    []
+  );
 
   // State untuk modal
   const [showModal, setShowModal] = useState(false);
@@ -74,7 +77,9 @@ export default function Organizations() {
         setNewOrgName("");
         setShowModal(false);
       } else {
-        alert(resJson?.message || "Mengajukan organisasi gagal, silahkan coba lagi.");
+        alert(
+          resJson?.message || "Mengajukan organisasi gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Propose organization error:", err);
@@ -86,9 +91,13 @@ export default function Organizations() {
 
   return (
     <div className="my-3">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Pilih Organisasi</h3>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+      <div className="d-flex justify-content-center mb-3">
+        <button
+          type="button"
+          className="btn px-4 fw-semibold"
+          style={{ backgroundColor: "#1E3E62", color: "#FFFFFF" }}
+          onClick={() => setShowModal(true)}
+        >
           + Ajukan Organisasi
         </button>
       </div>
@@ -101,14 +110,39 @@ export default function Organizations() {
 
       <ul className="list-group">
         {organizationsList.map((org) => (
-          <li key={org.id} className="list-group-item">
+          <li key={org.id} className="list-group-item p-0 rounded-3 mb-2">
             <button
-              className="btn btn-link text-decoration-none"
-              onClick={() => window.location.href = `organizations/${org.id}`}
+              className="w-100 text-start p-3 d-flex flex-column flex-md-row justify-content-between align-items-start gap-2 border-0 bg-light rounded-3"
+              onClick={() => (window.location.href = `organizations/${org.id}`)}
+              style={{ cursor: "pointer", transition: "all 0.2s ease" }}
             >
-              {org.name}
+              <div className="d-flex flex-column">
+                <span className="fw-bold fs-5">{org.name}</span>
+                <small className="text-muted">
+                  {org.status === "Verified"
+                    ? "Organisasi terverifikasi, silahkan mengelola data dan perangkat"
+                    : org.status === "Unverified"
+                    ? "Organisasi tidak diverifikasi oleh admin, silahkan menghubungi admin"
+                    : org.status === "Pending"
+                    ? "Organisasi sedang menunggu verifikasi, silahkan menghubungi admin"
+                    : "Status organisasi tidak diketahui"}
+                </small>
+                <small>Klik untuk masuk ke organisasi</small>
+              </div>
+              <span
+                className={`badge ${
+                  org.status === "Verified"
+                    ? "bg-success"
+                    : org.status === "Unverified"
+                    ? "bg-danger"
+                    : org.status === "Pending"
+                    ? "bg-warning text-dark"
+                    : "bg-secondary"
+                }`}
+              >
+                {org.status}
+              </span>
             </button>
-            <h6>Status: {org.status}</h6>
           </li>
         ))}
       </ul>

@@ -11,7 +11,8 @@ interface Notification {
 
 export default function Notifications() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -125,7 +126,6 @@ export default function Notifications() {
   return (
     <div className="container my-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Notifikasi</h3>
         {notifications.length > 0 && (
           <button className="btn btn-danger btn-sm" onClick={handleDeleteAll}>
             Hapus Semua
@@ -146,9 +146,13 @@ export default function Notifications() {
           const orgId = isInvitation ? notif.type.split(", id: ")[1] : null;
 
           return (
-            <li key={notif.id} className="list-group-item">
-              <div className="d-flex justify-content-between align-items-start">
-                <div>
+            <li
+              key={notif.id}
+              className="list-group-item mb-3 shadow-sm rounded-3"
+              style={{ transition: "all 0.2s ease", cursor: "default" }}
+            >
+              <div className="d-flex justify-content-between align-items-start flex-wrap">
+                <div className="flex-fill">
                   <h6 className="mb-1">{notif.subject}</h6>
                   <p className="mb-1">{notif.message}</p>
                   <small className="text-muted">
@@ -159,11 +163,15 @@ export default function Notifications() {
                   </small>
 
                   {isInvitation && orgId && (
-                    <div className="mt-2 d-flex gap-2">
+                    <div className="mt-3 d-flex flex-wrap gap-2">
                       <button
                         className="btn btn-sm btn-success"
                         onClick={async () => {
-                          await handleMemberInvitationResponse(orgId, true, notif.id);
+                          await handleMemberInvitationResponse(
+                            orgId,
+                            true,
+                            notif.id
+                          );
                           await handleDeleteOne(notif.id);
                         }}
                         disabled={submitting === notif.id}
@@ -173,7 +181,11 @@ export default function Notifications() {
                       <button
                         className="btn btn-sm btn-danger"
                         onClick={async () => {
-                          await handleMemberInvitationResponse(orgId, false, notif.id);
+                          await handleMemberInvitationResponse(
+                            orgId,
+                            false,
+                            notif.id
+                          );
                           await handleDeleteOne(notif.id);
                         }}
                         disabled={submitting === notif.id}
@@ -182,11 +194,12 @@ export default function Notifications() {
                       </button>
                     </div>
                   )}
-
                 </div>
+
                 <button
-                  className="btn btn-outline-danger btn-sm ms-3"
+                  className="btn btn-outline-danger btn-sm ms-3 mt-2 mt-md-0"
                   onClick={() => handleDeleteOne(notif.id)}
+                  aria-label="Hapus notifikasi"
                 >
                   ✕
                 </button>
@@ -195,7 +208,6 @@ export default function Notifications() {
           );
         })}
       </ul>
-
     </div>
   );
 }
