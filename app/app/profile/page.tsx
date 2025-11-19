@@ -1,9 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useModalAlert } from "@/src/context/ModalAlertContext";
 
 export default function Profile() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  const { showAlert } = useModalAlert();
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -36,11 +40,17 @@ export default function Profile() {
           setPhoneNumber(resJson.data.user.phone_number);
           setEmail(resJson.data.user.email);
         } else {
-          alert(resJson?.message || "Fetch profile gagal.");
+          showAlert(
+            "Fetch profil gagal",
+            resJson?.message || "Fetch profil gagal."
+          );
         }
       } catch (err) {
         console.error("Fetch profile error:", err);
-        alert("Terjadi kesalahan pada server atau jaringan.");
+        showAlert(
+          "Mohon maaf :(",
+          "Terjadi kesalahan pada server atau jaringan."
+        );
       } finally {
         setLoading(false);
       }
@@ -73,13 +83,19 @@ export default function Profile() {
           ...prev,
           ...resJson.data.user,
         }));
-        alert("Update profile berhasil.");
+        showAlert("Horay :)", "Update profile berhasil.");
       } else {
-        alert(resJson?.message || "Update profile gagal, coba lagi.");
+        showAlert(
+          "Update profile gagal",
+          resJson?.message || "Update profile gagal, coba lagi."
+        );
       }
     } catch (err) {
       console.error("Update profile error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -99,13 +115,22 @@ export default function Profile() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Update email berhasil, silahkan cek email untuk verifikasi.");
+        showAlert(
+          "Horay :)",
+          "Update email berhasil, silahkan cek email untuk verifikasi."
+        );
       } else {
-        alert(resJson?.message || "Update email gagal, coba lagi.");
+        showAlert(
+          "Update email gagal",
+          resJson?.message || "Update email gagal, coba lagi."
+        );
       }
     } catch (err) {
       console.error("Update email error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setEmail("");
     }
@@ -132,13 +157,19 @@ export default function Profile() {
       if (res.ok) {
         setOldPassword("");
         setNewPassword("");
-        alert("Update password berhasil.");
+        showAlert("Horay :)", "Update password berhasil.");
       } else {
-        alert(resJson?.message || "Update password gagal, coba lagi.");
+        showAlert(
+          "Update password gagal",
+          resJson?.message || "Update password gagal, coba lagi."
+        );
       }
     } catch (err) {
       console.error("Update password error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -155,7 +186,9 @@ export default function Profile() {
       <div className="card shadow">
         <div className="card-body text-center">
           <img
-            src={profile?.profile_picture || "/images/default-profile-picture.jpeg"}
+            src={
+              profile?.profile_picture || "/images/default-profile-picture.jpeg"
+            }
             alt="Profile"
             className="rounded-circle mb-3 mx-auto d-block"
             style={{ width: "120px", height: "120px", objectFit: "cover" }}
@@ -375,7 +408,6 @@ export default function Profile() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

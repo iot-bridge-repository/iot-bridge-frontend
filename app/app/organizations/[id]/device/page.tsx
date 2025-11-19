@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+import { useModalAlert } from "@/src/context/ModalAlertContext";
+
 interface Device {
   id: string;
   name: string;
@@ -19,6 +21,8 @@ export default function OrganizationsIdDevice() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken =
     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  const { showAlert } = useModalAlert();
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,11 +42,17 @@ export default function OrganizationsIdDevice() {
       if (res.ok) {
         setDevices(resJson.data || []);
       } else {
-        alert(resJson?.message || "Fetch devices gagal.");
+        showAlert(
+          "Fetch devices gagal",
+          resJson?.message || "Fetch devices gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch devices error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -64,7 +74,7 @@ export default function OrganizationsIdDevice() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Membuat device berhasil");
+        showAlert("Horay :)", "Anda berhasil membuat device berhasil.");
 
         (
           document.getElementById(
@@ -80,11 +90,17 @@ export default function OrganizationsIdDevice() {
           },
         ]);
       } else {
-        alert(resJson?.message || "Membuat device gagal.");
+        showAlert(
+          "Membuat perangkat gagal",
+          resJson?.message || "Membuat perangkat gagal."
+        );
       }
     } catch (err) {
       console.error("Create device error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setNewDeviceName("");
     }
@@ -113,7 +129,8 @@ export default function OrganizationsIdDevice() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Edit device berhasil");
+        showAlert("Horay :)", "Edit device berhasil.");
+
         (
           document.getElementById(
             "editDeviceModalCloseBtn"
@@ -125,11 +142,17 @@ export default function OrganizationsIdDevice() {
           )
         );
       } else {
-        alert(resJson?.message || "Edit device gagal.");
+        showAlert(
+          "Edit device gagal",
+          resJson?.message || "Edit device gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Edit device error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -149,15 +172,21 @@ export default function OrganizationsIdDevice() {
       );
 
       if (res.ok) {
-        alert("Menghapus device berhasil");
+        showAlert("Horay :)", "Anda berhasil menghapus device berhasil.");
         setDevices((prev) => prev.filter((d) => d.id !== deviceId));
       } else {
         const resJson = await res.json();
-        alert(resJson?.message || "Menghapus device gagal.");
+        showAlert(
+          "Menghapus device gagal",
+          resJson?.message || "Menghapus device gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Delete device error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useModalAlert } from "@/src/context/ModalAlertContext";
 
 interface Organization {
   id: string;
@@ -40,6 +41,8 @@ export default function AdminSystem() {
   const authToken =
     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
+  const { showAlert } = useModalAlert();
+
   const [organizationsList, setOrganizationsList] = useState<Organization[]>(
     []
   );
@@ -58,11 +61,17 @@ export default function AdminSystem() {
       if (res.ok) {
         setOrganizationsList(resJson.data || []);
       } else {
-        alert(resJson?.message || "Fetch organizations gagal.");
+        showAlert(
+          "Fetch organizations gagal",
+          resJson?.message || "Fetch organizations gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch organizations error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -96,11 +105,17 @@ export default function AdminSystem() {
           )
         );
       } else {
-        alert(resJson?.message || "Verifikasi organisasi gagal.");
+        showAlert(
+          "Verifikasi organisasi gagal",
+          resJson?.message || "Verifikasi organisasi gagal."
+        );
       }
     } catch (err) {
       console.error("Verifikasi organisasi error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -121,11 +136,17 @@ export default function AdminSystem() {
         setOrganizationDetail(resJson.data);
         setShowModal(true);
       } else {
-        alert(resJson?.message || "Fetch detail organisasi gagal.");
+        showAlert(
+          "Fetch detail organisasi gagal",
+          resJson?.message || "Fetch detail organisasi gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch organization detail error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -141,11 +162,17 @@ export default function AdminSystem() {
       if (res.ok) {
         setUsersList(resJson.data || []);
       } else {
-        alert(resJson?.message || "Fetch users gagal.");
+        showAlert(
+          "Fetch users gagal",
+          resJson?.message || "Fetch users gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch users error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoadingUsers(false);
     }
@@ -167,11 +194,17 @@ export default function AdminSystem() {
         setUserDetail(resJson.data);
         setShowUserDetailModal(true);
       } else {
-        alert(resJson?.message || "Gagal mengambil detail user.");
+        showAlert(
+          "Fetch user detail gagal",
+          resJson?.message || "Fetch user detail gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch user detail error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 

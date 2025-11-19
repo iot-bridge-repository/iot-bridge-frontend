@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useModalAlert } from "@/src/context/ModalAlertContext";
 
 interface Organization {
   id: string;
@@ -11,6 +12,8 @@ export default function Organizations() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken =
     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  const { showAlert } = useModalAlert();
 
   const [loading, setLoading] = useState(true);
   const [organizationsList, setOrganizationsList] = useState<Organization[]>(
@@ -36,11 +39,17 @@ export default function Organizations() {
         if (res.ok) {
           setOrganizationsList(resJson.data || []);
         } else {
-          alert(resJson?.message || "Fetch organizations list gagal.");
+          showAlert(
+            "Fetch list organisasi gagal",
+            resJson?.message || "Fetch list organisasi gagal."
+          );
         }
       } catch (err) {
         console.error("Fetch organizations list error:", err);
-        alert("Terjadi kesalahan pada server atau jaringan.");
+        showAlert(
+          "Mohon maaf :(",
+          "Terjadi kesalahan pada server atau jaringan."
+        );
       } finally {
         setLoading(false);
       }
@@ -52,7 +61,7 @@ export default function Organizations() {
   // Pengajuan organisasi
   const handleProposeOrganization = async (e: React.FormEvent) => {
     if (!newOrgName.trim()) {
-      alert("Nama organisasi tidak boleh kosong.");
+      showAlert("Hey kamu :(", "Nama organisasi tidak boleh kosong.");
       return;
     }
 
@@ -71,19 +80,23 @@ export default function Organizations() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Mengajukan organisasi berhasil.");
+        showAlert("Horay :)", "Mengajukan organisasi berhasil.");
         setOrganizationsList((prev) => [...prev, resJson.data]);
 
         setNewOrgName("");
         setShowModal(false);
       } else {
-        alert(
+        showAlert(
+          "Mengajukan organisasi gagal",
           resJson?.message || "Mengajukan organisasi gagal, silahkan coba lagi."
         );
       }
     } catch (err) {
       console.error("Propose organization error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setSubmitting(false);
     }

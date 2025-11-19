@@ -12,6 +12,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { useModalAlert } from "@/src/context/ModalAlertContext";
+
 interface Device {
   id: string;
   name: string;
@@ -29,6 +31,8 @@ export default function OrganizationsIdDataReports() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken =
     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  const { showAlert } = useModalAlert();
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,10 +55,17 @@ export default function OrganizationsIdDataReports() {
           prev.map((d) => (d.id === deviceId ? { ...d, pin: resJson.data } : d))
         );
       } else {
-        alert(resJson?.message || "Fetch pins list gagal.");
+        showAlert(
+          "Fetch pins list gagal",
+          resJson?.message || "Fetch pins list gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch pins list error:", err);
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -76,10 +87,17 @@ export default function OrganizationsIdDataReports() {
           fetchPinList(device.id);
         });
       } else {
-        alert(resJson?.message || "Fetch devices gagal.");
+        showAlert(
+          "Fetch devices gagal",
+          resJson?.message || "Fetch devices gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch devices error:", err);
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -102,10 +120,14 @@ export default function OrganizationsIdDataReports() {
           [key]: data.data || [],
         }));
       } else {
-        alert(data?.message || "Gagal mengambil report.");
+        showAlert("Fetch report gagal", data?.message || "Fetch report gagal.");
       }
     } catch (err) {
       console.error("Fetch report error:", err);
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 

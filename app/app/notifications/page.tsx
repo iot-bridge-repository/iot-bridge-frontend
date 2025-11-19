@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useModalAlert } from "@/src/context/ModalAlertContext";
 
 interface Notification {
   id: string;
@@ -13,6 +14,8 @@ export default function Notifications() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken =
     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  const { showAlert } = useModalAlert();
 
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -28,11 +31,17 @@ export default function Notifications() {
       if (res.ok) {
         setNotifications(resJson.data || []);
       } else {
-        alert(resJson?.message || "Fetch notifikasi gagal.");
+        showAlert(
+          "Fetch notifikasi gagal",
+          resJson?.message || "Fetch notifikasi gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch notifications error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -63,11 +72,17 @@ export default function Notifications() {
       if (res.ok) {
         fetchNotifications();
       } else {
-        alert(resJson?.message || "Respon undangan anggota gagal.");
+        showAlert(
+          "Respon undangan anggota gagal",
+          resJson?.message || "Respon undangan anggota gagal."
+        );
       }
     } catch (err) {
       console.error("Respon undangan anggota error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setSubmitting(null);
     }
@@ -87,11 +102,17 @@ export default function Notifications() {
       if (res.ok) {
         fetchNotifications();
       } else {
-        alert(resJson?.message || "Hapus semua notifikasi gagal.");
+        showAlert(
+          "Hapus semua notifikasi gagal",
+          resJson?.message || "Hapus semua notifikasi gagal."
+        );
       }
     } catch (err) {
       console.error("Hapus semua notifikasi error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -111,11 +132,17 @@ export default function Notifications() {
           prev.filter((notif) => notif.id !== notifId)
         );
       } else {
-        alert(resJson?.message || "Hapus notifikasi gagal.");
+        showAlert(
+          "Hapus notifikasi gagal",
+          resJson?.message || "Hapus notifikasi gagal."
+        );
       }
     } catch (err) {
       console.error("Hapus notifikasi error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 

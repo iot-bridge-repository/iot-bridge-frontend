@@ -52,7 +52,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-[#1E3E62] text-white flex flex-col z-50 transform transition-transform lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 w-64 bg-[#1E3E62] text-white flex flex-col z-50 transform transition-transform lg:translate-x-0 overflow-y-auto h-screen ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

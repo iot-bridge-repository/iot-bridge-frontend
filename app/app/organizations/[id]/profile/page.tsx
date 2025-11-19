@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+import { useModalAlert } from "@/src/context/ModalAlertContext";
+
 interface OrganizationProfile {
   id: string;
   organization_picture: string | null;
@@ -14,7 +16,10 @@ interface OrganizationProfile {
 export default function OrganizationsIdProfile() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  const { showAlert } = useModalAlert();
 
   const [profile, setProfile] = useState<OrganizationProfile | null>(null);
   const [memberList, setMemberList] = useState<any[]>([]);
@@ -42,11 +47,17 @@ export default function OrganizationsIdProfile() {
         setDescription(resJson.data.description || "");
         setLocation(resJson.data.location);
       } else {
-        alert(resJson?.message || "Fetch profile gagal.");
+        showAlert(
+          "Fetch Profile Gagal",
+          resJson?.message || "Fetch profile gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch profile error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -64,11 +75,17 @@ export default function OrganizationsIdProfile() {
       if (res.ok) {
         setMemberList(resJson.data);
       } else {
-        alert(resJson?.message || "Fetch member list gagal.");
+        showAlert(
+          "Fetch Member List Gagal",
+          resJson?.message || "Fetch member list gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch member list error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -95,17 +112,23 @@ export default function OrganizationsIdProfile() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Update profile berhasil.");
+        showAlert("Horay :)", "Update profile berhasil.");
         setProfile((prev: typeof profile) => ({
           ...prev,
           ...resJson.data,
         }));
       } else {
-        alert(resJson?.message || "Update profile gagal, silahkan coba lagi.");
+        showAlert(
+          "Update Profile Gagal",
+          resJson?.message || "Update profile gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Update profil error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setEditMode(false);
     }
@@ -126,14 +149,20 @@ export default function OrganizationsIdProfile() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("keluar dari organisasi berhasil.");
+        showAlert("Keluar organisasi", "Anda berhasil keluar organisasi.");
         window.location.href = "/app/organizations";
       } else {
-        alert(resJson?.message || "keluar dari organisasi gagal, silahkan coba lagi.");
+        showAlert(
+          "Keluar organisasi gaga",
+          resJson?.message || "Keluar organisasi gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Leave organisasi error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -144,29 +173,39 @@ export default function OrganizationsIdProfile() {
   const [password, setPassword] = useState("");
   const handleAddLocalMember = async () => {
     if (!username || !password) {
-      alert("Username dan password wajib diisi!");
+      showAlert("Input Tidak Lengkap", "Username dan password harus diisi.");
       return;
     }
 
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/local-member`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/local-member`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
         fetchMemberList();
       } else {
-        alert(resJson?.message || "Menambahkan member lokal gagal, silahkan coba lagi.");
+        showAlert(
+          "Menambahkan Member Lokal Gagal",
+          resJson?.message ||
+            "Menambahkan member lokal gagal, silahkan coba lagi."
+        );
       }
     } catch (err: any) {
       console.error("Add local member error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setUsername("");
       setPassword("");
@@ -179,103 +218,139 @@ export default function OrganizationsIdProfile() {
   const handleSearchMember = async () => {
     if (!searchMember) return;
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/search-members?identity=${encodeURIComponent(searchMember)}`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/search-members?identity=${encodeURIComponent(
+          searchMember
+        )}`,
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
         setSearchMemberResults(resJson.data || []);
-      } 
+      }
     } catch (err) {
       console.error("Search members error:", err);
     }
   };
 
   // member invitation
-  const [submittingMemberInvitation, setSubmittingMemberInvitation] = useState(false);
+  const [submittingMemberInvitation, setSubmittingMemberInvitation] =
+    useState(false);
   const handleMemberInvitation = async (userId: string) => {
     setSubmittingMemberInvitation(true);
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/member-invitation`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_id: userId }),
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/member-invitation`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ user_id: userId }),
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Berhasil mengundang anggota!");
+        showAlert("Horay :)", "Anda berhasil mengundang anggota!");
         fetchMemberList();
       } else {
-        alert(resJson?.message || "Mengundang anggota gagal, silahkan coba lagi.");
+        showAlert(
+          "Mengundang Anggota Gagal",
+          resJson?.message || "Mengundang anggota gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Member invitation error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setSubmittingMemberInvitation(false);
     }
   };
 
   // change member role
-  const [submittingChangeMemberRole, setSubmittingChangeMemberRole] = useState<string | null>(null);
+  const [submittingChangeMemberRole, setSubmittingChangeMemberRole] = useState<
+    string | null
+  >(null);
   const handleChangeMemberRole = async (userId: string, newRole: string) => {
     setSubmittingChangeMemberRole(userId);
 
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/member-roles`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_id: userId, new_role: newRole }),
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/member-roles`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ user_id: userId, new_role: newRole }),
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
         // update role di state
         setMemberList((prev) =>
-          prev.map((m) =>
-            m.user_id === userId ? { ...m, role: newRole } : m
-          )
+          prev.map((m) => (m.user_id === userId ? { ...m, role: newRole } : m))
         );
       } else {
-        alert(resJson?.message || "Mengganti role anggota gagal, silahkan coba lagi.");
+        showAlert(
+          "Mengganti Role Anggota Gagal",
+          resJson?.message ||
+            "Mengganti role anggota gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Change member role error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setSubmittingChangeMemberRole(null);
     }
   };
 
   // 🔹 Keluarkan Member
-  const [submittingRemoveMember, setSubmittingRemoveMember] = useState<string | null>(null);
+  const [submittingRemoveMember, setSubmittingRemoveMember] = useState<
+    string | null
+  >(null);
   const handleRemoveMember = async (userId: string) => {
     if (!confirm("Yakin ingin mengeluarkan member dari organisasi?")) return;
 
     setSubmittingRemoveMember(userId);
     try {
-      const res = await fetch(`${backendUrl}/organizations/${id}/member/${userId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/member/${userId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
 
       const resJson = await res.json();
       if (res.ok) {
         setMemberList((prev) => prev.filter((m) => m.user_id !== userId));
       } else {
-        alert(resJson?.message || "Mengeluarkan member gagal, silahkan coba lagi.");
+        showAlert(
+          "Mengeluarkan Member Gagal",
+          resJson?.message || "Mengeluarkan member gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Remove member error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setSubmittingRemoveMember(null);
     }
@@ -293,11 +368,13 @@ export default function OrganizationsIdProfile() {
 
   return (
     <div className="card my-3">
-
       {/* PROFILE */}
       <div className="card-body">
         <img
-          src={profile.organization_picture || "/images/default-profile-picture.jpeg"}
+          src={
+            profile.organization_picture ||
+            "/images/default-profile-picture.jpeg"
+          }
           alt="Profile"
           className="rounded-circle mb-3 mx-auto d-block"
           style={{ width: "120px", height: "120px", objectFit: "cover" }}
@@ -332,8 +409,10 @@ export default function OrganizationsIdProfile() {
                   className="form-control"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                />{/*
-                */}Nama
+                />
+                {/*
+                 */}
+                Nama
               </label>
             </div>
             <div className="mb-2">
@@ -342,8 +421,10 @@ export default function OrganizationsIdProfile() {
                   className="form-control"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                />{/*
-                */}Deskripsi
+                />
+                {/*
+                 */}
+                Deskripsi
               </label>
             </div>
             <div className="mb-2">
@@ -353,8 +434,10 @@ export default function OrganizationsIdProfile() {
                   className="form-control"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                />{/*
-                */}Lokasi
+                />
+                {/*
+                 */}
+                Lokasi
               </label>
             </div>
             <div className="mb-2">
@@ -365,8 +448,10 @@ export default function OrganizationsIdProfile() {
                   onChange={(e) =>
                     setPictureFile(e.target.files ? e.target.files[0] : null)
                   }
-                />{/*
-                */}Gambar
+                />
+                {/*
+                 */}
+                Gambar
               </label>
             </div>
             <button type="submit" className="btn btn-success me-2">
@@ -444,7 +529,7 @@ export default function OrganizationsIdProfile() {
 
                 {searchMemberResults.length > 0 && (
                   <ul className="list-group">
-                    {searchMemberResults  .map((user) => (
+                    {searchMemberResults.map((user) => (
                       <li
                         key={user.id}
                         className="list-group-item d-flex justify-content-between align-items-center"
@@ -458,7 +543,9 @@ export default function OrganizationsIdProfile() {
                           onClick={() => handleMemberInvitation(user.id)}
                           disabled={submittingMemberInvitation}
                         >
-                          {submittingMemberInvitation ? "Mengundang..." : "Undang"}
+                          {submittingMemberInvitation
+                            ? "Mengundang..."
+                            : "Undang"}
                         </button>
                       </li>
                     ))}
@@ -499,7 +586,6 @@ export default function OrganizationsIdProfile() {
         >
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-
               <div className="modal-header">
                 <h5 className="modal-title" id="addLocalMemberModalLabel">
                   Tambah Local Member
@@ -552,7 +638,6 @@ export default function OrganizationsIdProfile() {
                   {loading ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
-
             </div>
           </div>
         </div>
@@ -579,14 +664,18 @@ export default function OrganizationsIdProfile() {
                     data-bs-toggle="dropdown"
                     disabled={submittingChangeMemberRole === member.user_id}
                   >
-                    {submittingChangeMemberRole === member.user_id ? "Memproses..." : "Ganti Role"}
+                    {submittingChangeMemberRole === member.user_id
+                      ? "Memproses..."
+                      : "Ganti Role"}
                   </button>
                   <ul className="dropdown-menu">
                     {["Admin", "Operator", "Viewer"].map((role) => (
                       <li key={role}>
                         <button
                           className="dropdown-item"
-                          onClick={() => handleChangeMemberRole(member.user_id, role)}
+                          onClick={() =>
+                            handleChangeMemberRole(member.user_id, role)
+                          }
                         >
                           {role}
                         </button>
@@ -607,7 +696,6 @@ export default function OrganizationsIdProfile() {
             </li>
           ))}
         </ul>
-
       </div>
     </div>
   );

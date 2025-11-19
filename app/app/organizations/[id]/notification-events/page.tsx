@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+import { useModalAlert } from "@/src/context/ModalAlertContext";
+
 interface Device {
   id: string;
   name: string;
@@ -28,6 +30,8 @@ export default function OrganizationsIdNotificationEvents() {
   const authToken =
     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
+  const { showAlert } = useModalAlert();
+
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [notificationEventsList, setNotificationEventsList] = useState<
@@ -50,11 +54,17 @@ export default function OrganizationsIdNotificationEvents() {
       if (res.ok) {
         setDevices(resJson.data || []);
       } else {
-        alert(resJson?.message || "Fetch devices list gagal.");
+        showAlert(
+          "Fetch devices list gagal",
+          resJson?.message || "Fetch devices list gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch devices list error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -79,11 +89,17 @@ export default function OrganizationsIdNotificationEvents() {
         }));
         setNotificationEventsList((prev) => [...prev, ...withDevice]);
       } else {
-        alert(resJson?.message || "Fetch notifications events list gagal.");
+        showAlert(
+          "Fetch notifications events list gagal",
+          resJson?.message || "Fetch notifications events list gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch notifications events list error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -94,7 +110,12 @@ export default function OrganizationsIdNotificationEvents() {
     Partial<NotificationEvents>
   >({});
   const handleCreateNotificationEvents = async () => {
-    if (!newNotificationEvents.device_id) return alert("Pilih device dulu!");
+    if (!newNotificationEvents.device_id) {
+      return showAlert(
+        "Mohon maaf :)",
+        "Anda harus memilih device terlebih dahulu."
+      );
+    }
     try {
       const res = await fetch(
         `${backendUrl}/organizations/${id}/devices/${newNotificationEvents.device_id}/notification-events/`,
@@ -130,11 +151,18 @@ export default function OrganizationsIdNotificationEvents() {
           document.getElementById("createNotificationModal")!
         )?.hide();
       } else {
-        alert(resJson?.message || "Membuat notification event gagal.");
+        showAlert(
+          "Membuat notification event gagal",
+          resJson?.message ||
+            "Membuat notification event gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Create notification event error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -178,11 +206,18 @@ export default function OrganizationsIdNotificationEvents() {
           document.getElementById("editNotificationModal")!
         )?.hide();
       } else {
-        alert(resJson?.message || "Update notification event gagal.");
+        showAlert(
+          "Update notification event gagal",
+          resJson?.message ||
+            "Update notification event gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Update notification event error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -205,11 +240,18 @@ export default function OrganizationsIdNotificationEvents() {
           prev.filter((n) => n.id !== event.id)
         );
       } else {
-        alert(resJson?.message || "Hapus notification event gagal.");
+        showAlert(
+          "Hapus notification event gagal",
+          resJson?.message ||
+            "Hapus notification event gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Delete notification event error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 

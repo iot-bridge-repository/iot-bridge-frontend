@@ -16,6 +16,8 @@ import {
   PolarAngleAxis,
 } from "recharts";
 
+import { useModalAlert } from "@/src/context/ModalAlertContext";
+
 interface Device {
   id: string;
   name: string;
@@ -55,6 +57,8 @@ export default function OrganizationsId() {
   const authToken =
     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
+  const { showAlert } = useModalAlert();
+
   const [devices, setDevices] = useState<Device[]>([]);
   const [widgetsBoxes, setWidgetsBoxes] = useState<WidgetBox[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,11 +79,17 @@ export default function OrganizationsId() {
       if (res.ok) {
         setDevices(resJson.data || []);
       } else {
-        alert(resJson?.message || "Fetch devices list gagal.");
+        showAlert(
+          "Fetch devices list gagal",
+          resJson?.message || "Fetch devices list gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Fetch devices list error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -107,11 +117,18 @@ export default function OrganizationsId() {
           ...insertDeviceToWidgetBoxes,
         ]);
       } else {
-        alert(resJson?.message || "Fetch widgets boxes list gagal.");
+        showAlert(
+          "Fetch widgets boxes list gagal",
+          resJson?.message ||
+            "Fetch widgets boxes list gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Fetch widgets boxes list error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setLoading(false);
     }
@@ -129,7 +146,7 @@ export default function OrganizationsId() {
   });
   const handleCreateWidget = async () => {
     if (!newWidget.deviceId) {
-      alert("Pilih device terlebih dahulu");
+      showAlert("Hey kamu :(", "Pilih device terlebih dahulu.");
       return;
     }
 
@@ -155,17 +172,23 @@ export default function OrganizationsId() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Membuat widget box berhasil.");
+        showAlert("Horay :)", "Membuat widget box berhasil.");
         setWidgetsBoxes([]);
         devices.forEach((device) => {
           fetchWidgetsBoxesList(device.id);
         });
       } else {
-        alert(resJson?.message || "Membuat widget box gagal.");
+        showAlert(
+          "Membuat widget box gagal",
+          resJson?.message || "Membuat widget box gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Create widget box error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setNewWidget({
         deviceId: "",
@@ -196,11 +219,18 @@ export default function OrganizationsId() {
           setWidgetsBoxes((prev) => prev.filter((w) => w.id !== widgetId));
         } else {
           const resJson = await res.json();
-          alert(resJson.message || "Menghapus widget box gagal.");
+          showAlert(
+            "Menghapus widget box gagal",
+            resJson?.message ||
+              "Menghapus widget box gagal, silahkan coba lagi."
+          );
         }
       } catch (err) {
         console.error("Delete widget box error:", err);
-        alert("Terjadi kesalahan pada server/jaringan.");
+        showAlert(
+          "Mohon maaf :(",
+          "Terjadi kesalahan pada server atau jaringan."
+        );
       }
     }
   };
@@ -233,17 +263,23 @@ export default function OrganizationsId() {
 
       const resJson = await res.json();
       if (res.ok) {
-        alert("Update widget box berhasil.");
+        showAlert("Horay :)", "Update widget box berhasil.");
         setWidgetsBoxes((prev) =>
           prev.map((w) => (w.id === editWidget.id ? { ...editWidget } : w))
         );
         setEditWidget(null);
       } else {
-        alert(resJson?.message || "Update widget box gagal.");
+        showAlert(
+          "Update widget box gagal",
+          resJson?.message || "Update widget box gagal, silahkan coba lagi."
+        );
       }
     } catch (err) {
       console.error("Update widget box error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
@@ -286,11 +322,17 @@ export default function OrganizationsId() {
           [key]: resJson.data || [],
         }));
       } else {
-        alert(resJson?.message || "Fetch report gagal.");
+        showAlert(
+          "Fetch report gagal",
+          resJson?.message || "Fetch report gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch report error:", err);
-      alert("Terjadi kesalahan pada server atau jaringan.");
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     } finally {
       setFetchingReportLoading(false);
     }
