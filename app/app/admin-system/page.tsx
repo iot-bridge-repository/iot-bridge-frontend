@@ -40,6 +40,7 @@ interface UserDetail {
 export default function AdminSystem() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -60,6 +61,12 @@ export default function AdminSystem() {
       const resJson = await res.json();
       if (res.ok) {
         setOrganizationsList(resJson.data || []);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch organizations gagal",
@@ -104,6 +111,12 @@ export default function AdminSystem() {
             org.id === orgId ? { ...org, status: newStatus } : org
           )
         );
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Verifikasi organisasi gagal",
@@ -135,6 +148,12 @@ export default function AdminSystem() {
       if (res.ok) {
         setOrganizationDetail(resJson.data);
         setShowModal(true);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch detail organisasi gagal",
@@ -161,6 +180,12 @@ export default function AdminSystem() {
       const resJson = await res.json();
       if (res.ok) {
         setUsersList(resJson.data || []);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch users gagal",
@@ -193,6 +218,12 @@ export default function AdminSystem() {
       if (res.ok) {
         setUserDetail(resJson.data);
         setShowUserDetailModal(true);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch user detail gagal",

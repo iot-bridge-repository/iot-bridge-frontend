@@ -14,6 +14,7 @@ interface Notification {
 export default function Notifications() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -30,6 +31,12 @@ export default function Notifications() {
       const resJson = await res.json();
       if (res.ok) {
         setNotifications(resJson.data || []);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch notifikasi gagal",
@@ -71,6 +78,12 @@ export default function Notifications() {
       const resJson = await res.json();
       if (res.ok) {
         fetchNotifications();
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Respon undangan anggota gagal",
@@ -101,6 +114,12 @@ export default function Notifications() {
       const resJson = await res.json();
       if (res.ok) {
         fetchNotifications();
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Hapus semua notifikasi gagal",
@@ -131,6 +150,12 @@ export default function Notifications() {
         setNotifications((prev) =>
           prev.filter((notif) => notif.id !== notifId)
         );
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Hapus notifikasi gagal",

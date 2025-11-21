@@ -27,6 +27,7 @@ export default function OrganizationsIdNotificationEvents() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -51,6 +52,12 @@ export default function OrganizationsIdNotificationEvents() {
       const resJson = await res.json();
       if (res.ok) {
         setDevices(resJson.data || []);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch devices list gagal",
@@ -86,6 +93,12 @@ export default function OrganizationsIdNotificationEvents() {
           device_name: devices.find((d) => d.id === deviceId)?.name || "",
         }));
         setNotificationEventsList((prev) => [...prev, ...withDevice]);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch notifications events list gagal",
@@ -148,6 +161,12 @@ export default function OrganizationsIdNotificationEvents() {
         (window as any).bootstrap.Modal.getInstance(
           document.getElementById("createNotificationModal")!
         )?.hide();
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Membuat notification event gagal",
@@ -203,6 +222,12 @@ export default function OrganizationsIdNotificationEvents() {
         (window as any).bootstrap.Modal.getInstance(
           document.getElementById("editNotificationModal")!
         )?.hide();
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Update notification event gagal",
@@ -237,6 +262,12 @@ export default function OrganizationsIdNotificationEvents() {
         setNotificationEventsList((prev) =>
           prev.filter((n) => n.id !== event.id)
         );
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Hapus notification event gagal",

@@ -6,6 +6,7 @@ import { useAuth } from "@/src/contexts/AuthContext";
 export default function Profile() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -39,6 +40,12 @@ export default function Profile() {
           setUsername(resJson.data.user.username);
           setPhoneNumber(resJson.data.user.phone_number);
           setEmail(resJson.data.user.email);
+        } else if (
+          resJson?.message === "Token expired" ||
+          resJson?.message === "Invalid token"
+        ) {
+          sessionStorage.removeItem("authToken");
+          setAuthToken(null);
         } else {
           showAlert(
             "Fetch profil gagal",
@@ -84,6 +91,12 @@ export default function Profile() {
           ...resJson.data.user,
         }));
         showAlert("Horay :)", "Update profile berhasil.");
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Update profile gagal",
@@ -119,6 +132,12 @@ export default function Profile() {
           "Horay :)",
           "Update email berhasil, silahkan cek email untuk verifikasi."
         );
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Update email gagal",
@@ -158,6 +177,12 @@ export default function Profile() {
         setOldPassword("");
         setNewPassword("");
         showAlert("Horay :)", "Update password berhasil.");
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Update password gagal",
@@ -174,12 +199,10 @@ export default function Profile() {
   };
 
   // Logout
-  const { setAuthToken } = useAuth();
   const handleLogOut = () => {
     try {
       sessionStorage.removeItem("authToken");
       setAuthToken(null);
-      window.location.href = "/";
     } catch (err) {
       console.error("Logout error:", err);
       showAlert(

@@ -30,6 +30,7 @@ export default function OrganizationsIdDataReports() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -53,6 +54,12 @@ export default function OrganizationsIdDataReports() {
         setDevices((prev) =>
           prev.map((d) => (d.id === deviceId ? { ...d, pin: resJson.data } : d))
         );
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch pins list gagal",
@@ -85,6 +92,12 @@ export default function OrganizationsIdDataReports() {
         resJson.data.forEach((device: Device) => {
           fetchPinList(device.id);
         });
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch devices gagal",
@@ -111,15 +124,24 @@ export default function OrganizationsIdDataReports() {
         }
       );
 
-      const data = await res.json();
+      const resJson = await res.json();
       if (res.ok) {
         const key = `${deviceId}-${pin}`;
         setReports((prev) => ({
           ...prev,
-          [key]: data.data || [],
+          [key]: resJson.data || [],
         }));
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
-        showAlert("Fetch report gagal", data?.message || "Fetch report gagal.");
+        showAlert(
+          "Fetch report gagal",
+          resJson?.message || "Fetch report gagal."
+        );
       }
     } catch (err) {
       console.error("Fetch report error:", err);

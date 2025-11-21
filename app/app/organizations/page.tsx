@@ -12,6 +12,7 @@ interface Organization {
 export default function Organizations() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -38,6 +39,12 @@ export default function Organizations() {
         const resJson = await res.json();
         if (res.ok) {
           setOrganizationsList(resJson.data || []);
+        } else if (
+          resJson?.message === "Token expired" ||
+          resJson?.message === "Invalid token"
+        ) {
+          sessionStorage.removeItem("authToken");
+          setAuthToken(null);
         } else {
           showAlert(
             "Fetch list organisasi gagal",
@@ -85,6 +92,12 @@ export default function Organizations() {
 
         setNewOrgName("");
         setShowModal(false);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Mengajukan organisasi gagal",

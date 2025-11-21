@@ -17,6 +17,7 @@ export default function OrganizationsIdProfile() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -45,6 +46,12 @@ export default function OrganizationsIdProfile() {
         setName(resJson.data.name);
         setDescription(resJson.data.description || "");
         setLocation(resJson.data.location);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch Profile Gagal",
@@ -73,6 +80,12 @@ export default function OrganizationsIdProfile() {
       const resJson = await res.json();
       if (res.ok) {
         setMemberList(resJson.data);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch Member List Gagal",
@@ -116,6 +129,12 @@ export default function OrganizationsIdProfile() {
           ...prev,
           ...resJson.data,
         }));
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Update Profile Gagal",
@@ -150,6 +169,12 @@ export default function OrganizationsIdProfile() {
       if (res.ok) {
         showAlert("Keluar organisasi", "Anda berhasil keluar organisasi.");
         window.location.href = "/app/organizations";
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Keluar organisasi gaga",
@@ -192,6 +217,12 @@ export default function OrganizationsIdProfile() {
       const resJson = await res.json();
       if (res.ok) {
         fetchMemberList();
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Menambahkan Member Lokal Gagal",
@@ -229,6 +260,12 @@ export default function OrganizationsIdProfile() {
       const resJson = await res.json();
       if (res.ok) {
         setSearchMemberResults(resJson.data || []);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       }
     } catch (err) {
       console.error("Search members error:", err);
@@ -257,6 +294,12 @@ export default function OrganizationsIdProfile() {
       if (res.ok) {
         showAlert("Horay :)", "Anda berhasil mengundang anggota!");
         fetchMemberList();
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Mengundang Anggota Gagal",
@@ -300,6 +343,12 @@ export default function OrganizationsIdProfile() {
         setMemberList((prev) =>
           prev.map((m) => (m.user_id === userId ? { ...m, role: newRole } : m))
         );
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Mengganti Role Anggota Gagal",
@@ -338,6 +387,12 @@ export default function OrganizationsIdProfile() {
       const resJson = await res.json();
       if (res.ok) {
         setMemberList((prev) => prev.filter((m) => m.user_id !== userId));
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Mengeluarkan Member Gagal",

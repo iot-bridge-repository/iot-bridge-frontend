@@ -54,6 +54,7 @@ export default function OrganizationsId() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -76,6 +77,12 @@ export default function OrganizationsId() {
       const resJson = await res.json();
       if (res.ok) {
         setDevices(resJson.data || []);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch devices list gagal",
@@ -114,6 +121,12 @@ export default function OrganizationsId() {
           ...prevWidgetsBoxes,
           ...insertDeviceToWidgetBoxes,
         ]);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch widgets boxes list gagal",
@@ -175,6 +188,12 @@ export default function OrganizationsId() {
         devices.forEach((device) => {
           fetchWidgetsBoxesList(device.id);
         });
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Membuat widget box gagal",
@@ -213,8 +232,16 @@ export default function OrganizationsId() {
             },
           }
         );
+
+        const resJson = await res.json();
         if (res.ok) {
           setWidgetsBoxes((prev) => prev.filter((w) => w.id !== widgetId));
+        } else if (
+          resJson?.message === "Token expired" ||
+          resJson?.message === "Invalid token"
+        ) {
+          sessionStorage.removeItem("authToken");
+          setAuthToken(null);
         } else {
           const resJson = await res.json();
           showAlert(
@@ -266,6 +293,12 @@ export default function OrganizationsId() {
           prev.map((w) => (w.id === editWidget.id ? { ...editWidget } : w))
         );
         setEditWidget(null);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Update widget box gagal",
@@ -319,6 +352,12 @@ export default function OrganizationsId() {
           ...prev,
           [key]: resJson.data || [],
         }));
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch report gagal",

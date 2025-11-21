@@ -20,6 +20,7 @@ export default function OrganizationsIdDevice() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const authToken = useAuth().authToken;
+  const { setAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -40,6 +41,12 @@ export default function OrganizationsIdDevice() {
       const resJson = await res.json();
       if (res.ok) {
         setDevices(resJson.data || []);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Fetch devices gagal",
@@ -88,6 +95,12 @@ export default function OrganizationsIdDevice() {
             auth_code: resJson.data.auth_code,
           },
         ]);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Membuat perangkat gagal",
@@ -140,6 +153,12 @@ export default function OrganizationsIdDevice() {
             d.id === editDevice.id ? { ...d, name: editName } : d
           )
         );
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         showAlert(
           "Edit device gagal",
@@ -170,9 +189,16 @@ export default function OrganizationsIdDevice() {
         }
       );
 
+      const resJson = await res.json();
       if (res.ok) {
         showAlert("Horay :)", "Anda berhasil menghapus device berhasil.");
         setDevices((prev) => prev.filter((d) => d.id !== deviceId));
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken(null);
       } else {
         const resJson = await res.json();
         showAlert(
