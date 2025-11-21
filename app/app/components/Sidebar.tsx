@@ -1,4 +1,5 @@
 import SidebarItem from "./SidebarItem";
+import { useAuth } from "@/src/contexts/AuthContext";
 import { usePathname } from "next/navigation";
 
 interface SidebarProps {
@@ -7,6 +8,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
+  const { userRole } = useAuth();
   const pathname = usePathname();
 
   const menuItems = [
@@ -37,6 +39,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     },
   ];
 
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (item.href === "/app/admin-system") {
+      return userRole === "Admin System";
+    }
+    return true;
+  });
+
   return (
     <>
       {/* Overlay untuk mobile, lebih transparan */}
@@ -61,7 +70,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Menu */}
         <nav className="flex-1 p-4">
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <SidebarItem
               key={item.href}
               href={item.href}

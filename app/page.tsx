@@ -1,5 +1,7 @@
 "use client";
 
+import { jwtDecode } from "jwt-decode";
+
 import { useState, useEffect } from "react";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
@@ -7,12 +9,17 @@ import ForgotPasswordForm from "./components/ForgotPasswordForm";
 import { useModalAlert } from "@/src/contexts/ModalAlertContext";
 import { useAuth } from "@/src/contexts/AuthContext";
 
+interface TokenPayload {
+  role: string;
+}
+
 export default function RootPage() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [form, setForm] = useState<"login" | "register" | "forgot_password">(
     "login"
   );
-  const { setAuthToken, authToken, loadingGetAuthToken } = useAuth();
+  const { setAuthToken, setUserRole, authToken, loadingGetAuthToken } =
+    useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -47,6 +54,10 @@ export default function RootPage() {
       if (res.ok) {
         sessionStorage.setItem("authToken", resJson.data.token);
         setAuthToken(resJson.data.token);
+
+        const decoded = jwtDecode<TokenPayload>(resJson.data.token);
+        sessionStorage.setItem("userRole", decoded.role);
+        setUserRole(decoded.role);
 
         window.location.href = "/app";
       } else {
