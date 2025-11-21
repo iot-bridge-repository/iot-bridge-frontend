@@ -34,6 +34,7 @@ interface WidgetBox {
   device_id: string;
   device_name: string;
   realTimeValue: number | null;
+  realTimeTime: string | null;
 }
 
 interface WsMessage {
@@ -43,18 +44,13 @@ interface WsMessage {
   time: string;
 }
 
-interface DeviceReport {
-  pin: string;
-  value: number;
-  time: string;
-}
-
 export default function OrganizationsId() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
-  const authToken = useAuth().authToken;
-  const { setAuthToken } = useAuth();
+  const auth = useAuth();
+  const authToken = auth?.authToken;
+  const setAuthToken = auth?.setAuthToken;
 
   const { showAlert } = useModalAlert();
 
@@ -62,44 +58,21 @@ export default function OrganizationsId() {
   const [widgetsBoxes, setWidgetsBoxes] = useState<WidgetBox[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Fetch devices
-  const fetchDevicesList = async () => {
-    try {
-      const res = await fetch(
-        `${backendUrl}/organizations/${id}/devices/search?name=`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+  // Refs for websocket & subscribed topics
+  const wsRef = useRef<WebSocket | null>(null);
+  const subscribedTopicsRef = useRef<Set<string>>(new Set());
+  const widgetsBoxesRef = useRef<WidgetBox[]>([]);
 
-      const resJson = await res.json();
-      if (res.ok) {
-        setDevices(resJson.data || []);
-      } else if (
-        resJson?.message === "Token expired" ||
-        resJson?.message === "Invalid token"
-      ) {
-        sessionStorage.removeItem("authToken");
-        setAuthToken(null);
-      } else {
-        showAlert(
-          "Fetch devices list gagal",
-          resJson?.message || "Fetch devices list gagal, silahkan coba lagi."
-        );
-      }
-    } catch (err) {
-      console.error("Fetch devices list error:", err);
-      showAlert(
-        "Mohon maaf :(",
-        "Terjadi kesalahan pada server atau jaringan."
-      );
-    }
-  };
+  // Keep widgetsBoxesRef in sync
+  useEffect(() => {
+    widgetsBoxesRef.current = widgetsBoxes;
+  }, [widgetsBoxes]);
 
-  // 🔹 Fetch widgets boxes list
-  const fetchWidgetsBoxesList = async (deviceId: string) => {
+  // 🔹 Fetch widgets boxes for a single device -> return mapped array
+  const fetchWidgetsBoxesListForDevice = async (
+    deviceId: string,
+    deviceName?: string
+  ) => {
     try {
       const res = await fetch(
         `${backendUrl}/organizations/${id}/devices/${deviceId}/widget-boxes/list`,
@@ -112,30 +85,83 @@ export default function OrganizationsId() {
 
       const resJson = await res.json();
       if (res.ok) {
-        const insertDeviceToWidgetBoxes = resJson.data.map((w: WidgetBox) => ({
-          ...w,
-          device_id: deviceId,
-          device_name: devices.find((d) => d.id === deviceId)?.name,
-        }));
-        setWidgetsBoxes((prevWidgetsBoxes) => [
-          ...prevWidgetsBoxes,
-          ...insertDeviceToWidgetBoxes,
-        ]);
+        const insertDeviceToWidgetBoxes = (resJson.data || []).map(
+          (w: any) => ({
+            ...w,
+            device_id: deviceId,
+            device_name: deviceName ?? w.device_name ?? null,
+            realTimeValue: w.realTimeValue ?? null,
+            realTimeTime: w.realTimeTime ?? null,
+          })
+        ) as WidgetBox[];
+        return insertDeviceToWidgetBoxes;
       } else if (
         resJson?.message === "Token expired" ||
         resJson?.message === "Invalid token"
       ) {
         sessionStorage.removeItem("authToken");
-        setAuthToken(null);
+        setAuthToken?.(null);
+        return [];
       } else {
         showAlert(
           "Fetch widgets boxes list gagal",
           resJson?.message ||
             "Fetch widgets boxes list gagal, silahkan coba lagi."
         );
+        return [];
       }
     } catch (err) {
       console.error("Fetch widgets boxes list error:", err);
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
+      return [];
+    }
+  };
+
+  // 🔹 Fetch devices and all widgets (use Promise.all) -> set loading false after all ready
+  const fetchDevicesList = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/search?name=`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      const resJson = await res.json();
+      if (res.ok) {
+        const deviceList: Device[] = resJson.data || [];
+        setDevices(deviceList);
+
+        // Fetch widgets for all devices in parallel
+        const widgetsArrays = await Promise.all(
+          deviceList.map((device) =>
+            fetchWidgetsBoxesListForDevice(device.id, device.name)
+          )
+        );
+        // flatten and set once
+        const flattened = widgetsArrays.flat();
+        setWidgetsBoxes(flattened);
+        subscribedTopicsRef.current = new Set(); // reset subscriptions on fresh load
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken?.(null);
+      } else {
+        showAlert(
+          "Fetch devices list gagal",
+          resJson?.message || "Fetch devices list gagal, silahkan coba lagi."
+        );
+      }
+    } catch (err) {
+      console.error("Fetch devices list error:", err);
       showAlert(
         "Mohon maaf :(",
         "Terjadi kesalahan pada server atau jaringan."
@@ -145,7 +171,7 @@ export default function OrganizationsId() {
     }
   };
 
-  // 🔹 Create widget
+  // 🔹 Create widget (minimal fix: ensure numeric fields sent as numbers)
   const [newWidget, setNewWidget] = useState({
     deviceId: "",
     name: "",
@@ -155,6 +181,7 @@ export default function OrganizationsId() {
     default_value: "",
     unit: "",
   });
+
   const handleCreateWidget = async () => {
     if (!newWidget.deviceId) {
       showAlert("Hey kamu :(", "Pilih device terlebih dahulu.");
@@ -162,6 +189,20 @@ export default function OrganizationsId() {
     }
 
     try {
+      const bodyPayload = {
+        name: newWidget.name,
+        pin: newWidget.pin,
+        min_value:
+          newWidget.min_value === "" ? null : Number(newWidget.min_value),
+        max_value:
+          newWidget.max_value === "" ? null : Number(newWidget.max_value),
+        default_value:
+          newWidget.default_value === ""
+            ? null
+            : Number(newWidget.default_value),
+        unit: newWidget.unit || null,
+      };
+
       const res = await fetch(
         `${backendUrl}/organizations/${id}/devices/${newWidget.deviceId}/widget-boxes/`,
         {
@@ -170,30 +211,21 @@ export default function OrganizationsId() {
             Authorization: `Bearer ${authToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name: newWidget.name,
-            pin: newWidget.pin,
-            min_value: newWidget.min_value,
-            max_value: newWidget.max_value,
-            default_value: newWidget.default_value,
-            unit: newWidget.unit,
-          }),
+          body: JSON.stringify(bodyPayload),
         }
       );
 
       const resJson = await res.json();
       if (res.ok) {
         showAlert("Horay :)", "Membuat widget box berhasil.");
-        setWidgetsBoxes([]);
-        devices.forEach((device) => {
-          fetchWidgetsBoxesList(device.id);
-        });
+        // Re-fetch devices & widgets to get fresh data
+        await fetchDevicesList();
       } else if (
         resJson?.message === "Token expired" ||
         resJson?.message === "Invalid token"
       ) {
         sessionStorage.removeItem("authToken");
-        setAuthToken(null);
+        setAuthToken?.(null);
       } else {
         showAlert(
           "Membuat widget box gagal",
@@ -219,53 +251,71 @@ export default function OrganizationsId() {
     }
   };
 
-  // 🔹 Delete widget
+  // 🔹 Delete widget (fix double res.json)
   const handleDeleteWidgetBox = async (deviceId: string, widgetId: string) => {
-    if (confirm("Yakin ingin menghapus widget ini?")) {
-      try {
-        const res = await fetch(
-          `${backendUrl}/organizations/${id}/devices/${deviceId}/widget-boxes/${widgetId}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
+    if (!confirm("Yakin ingin menghapus widget ini?")) return;
 
-        const resJson = await res.json();
-        if (res.ok) {
-          setWidgetsBoxes((prev) => prev.filter((w) => w.id !== widgetId));
-        } else if (
-          resJson?.message === "Token expired" ||
-          resJson?.message === "Invalid token"
-        ) {
-          sessionStorage.removeItem("authToken");
-          setAuthToken(null);
-        } else {
-          const resJson = await res.json();
-          showAlert(
-            "Menghapus widget box gagal",
-            resJson?.message ||
-              "Menghapus widget box gagal, silahkan coba lagi."
-          );
+    try {
+      const res = await fetch(
+        `${backendUrl}/organizations/${id}/devices/${deviceId}/widget-boxes/${widgetId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         }
-      } catch (err) {
-        console.error("Delete widget box error:", err);
+      );
+
+      const resJson = await res.json();
+      if (res.ok) {
+        setWidgetsBoxes((prev) => prev.filter((w) => w.id !== widgetId));
+        // Also remove subscription if any
+        const topic = `device-id/${deviceId}/pin/${
+          widgetsBoxesRef.current.find((w) => w.id === widgetId)?.pin ?? ""
+        }`;
+        subscribedTopicsRef.current.delete(topic);
+      } else if (
+        resJson?.message === "Token expired" ||
+        resJson?.message === "Invalid token"
+      ) {
+        sessionStorage.removeItem("authToken");
+        setAuthToken?.(null);
+      } else {
         showAlert(
-          "Mohon maaf :(",
-          "Terjadi kesalahan pada server atau jaringan."
+          "Menghapus widget box gagal",
+          resJson?.message || "Menghapus widget box gagal, silahkan coba lagi."
         );
       }
+    } catch (err) {
+      console.error("Delete widget box error:", err);
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
     }
   };
 
-  // 🔹 Update widget
+  // 🔹 Update widget (ensure numeric fields sent as numbers)
   const [editWidget, setEditWidget] = useState<WidgetBox | null>(null);
   const handleUpdateWidgetBox = async () => {
     if (!editWidget) return;
 
     try {
+      const bodyPayload = {
+        id: editWidget.id,
+        name: editWidget.name,
+        pin: editWidget.pin,
+        min_value:
+          editWidget.min_value === null ? null : Number(editWidget.min_value),
+        max_value:
+          editWidget.max_value === null ? null : Number(editWidget.max_value),
+        default_value:
+          editWidget.default_value === null
+            ? null
+            : Number(editWidget.default_value),
+        unit: editWidget.unit ?? null,
+      };
+
       const res = await fetch(
         `${backendUrl}/organizations/${id}/devices/${editWidget.device_id}/widget-boxes/`,
         {
@@ -274,15 +324,7 @@ export default function OrganizationsId() {
             Authorization: `Bearer ${authToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            id: editWidget.id,
-            name: editWidget.name,
-            pin: editWidget.pin,
-            min_value: editWidget.min_value?.toString(),
-            max_value: editWidget.max_value?.toString(),
-            default_value: editWidget.default_value?.toString(),
-            unit: editWidget.unit,
-          }),
+          body: JSON.stringify(bodyPayload),
         }
       );
 
@@ -298,7 +340,7 @@ export default function OrganizationsId() {
         resJson?.message === "Invalid token"
       ) {
         sessionStorage.removeItem("authToken");
-        setAuthToken(null);
+        setAuthToken?.(null);
       } else {
         showAlert(
           "Update widget box gagal",
@@ -319,6 +361,7 @@ export default function OrganizationsId() {
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [fetchingReportLoading, setFetchingReportLoading] = useState(false);
+
   const formatDateToLocalInput = (date: Date) => {
     const tzOffset = date.getTimezoneOffset() * 60000;
     const localISOTime = new Date(date.getTime() - tzOffset)
@@ -326,6 +369,7 @@ export default function OrganizationsId() {
       .slice(0, 16);
     return localISOTime;
   };
+
   const handleFetchReport = async (
     deviceId: string,
     pin: string,
@@ -357,7 +401,7 @@ export default function OrganizationsId() {
         resJson?.message === "Invalid token"
       ) {
         sessionStorage.removeItem("authToken");
-        setAuthToken(null);
+        setAuthToken?.(null);
       } else {
         showAlert(
           "Fetch report gagal",
@@ -387,6 +431,7 @@ export default function OrganizationsId() {
       setStartTime(formatDateToLocalInput(oneHourAgo));
       setEndTime(formatDateToLocalInput(now));
 
+      // fetch report once here (useEffect triggers only when reportWidget changes)
       handleFetchReport(
         reportWidget.device_id,
         reportWidget.pin,
@@ -399,6 +444,7 @@ export default function OrganizationsId() {
       setStartTime("");
       setEndTime("");
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportWidget]);
 
   const handleApplyTimeFilter = () => {
@@ -411,28 +457,25 @@ export default function OrganizationsId() {
     );
   };
 
-  const handleOpenReport = async (widget: WidgetBox) => {
+  const handleOpenReport = (widget: WidgetBox) => {
+    // Only set reportWidget; useEffect will fetch (prevents double fetch)
     setReportWidget(widget);
-    await handleFetchReport(widget.device_id, widget.pin);
   };
 
+  // Initial load
   useEffect(() => {
     fetchDevicesList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    devices.forEach((device) => {
-      fetchWidgetsBoxesList(device.id);
-    });
-  }, [devices]);
-
-  // 🔹 WebSocket
-  const wsRef = useRef<WebSocket | null>(null);
+  // -----------------------
+  // WebSocket: connect, subscribe, and handle incoming messages
+  // -----------------------
   const insertRealTimeValueToWidgetsBoxes = (data: WsMessage) => {
     setWidgetsBoxes((prev) =>
       prev.map((w) =>
         w.device_id === data.deviceId && w.pin === data.pin
-          ? { ...w, realTimeValue: data.value }
+          ? { ...w, realTimeValue: data.value, realTimeTime: data.time }
           : w
       )
     );
@@ -444,12 +487,17 @@ export default function OrganizationsId() {
 
     ws.onopen = () => {
       console.log("WebSocket connected");
-      widgetsBoxes.forEach((widget) => {
-        const subscribeMsg = {
-          type: "subscribe",
-          topic: `device-id/${widget.device_id}/pin/${widget.pin}`,
-        };
-        ws.send(JSON.stringify(subscribeMsg));
+      // Subscribe to all current widgets
+      widgetsBoxesRef.current.forEach((widget) => {
+        const topic = `device-id/${widget.device_id}/pin/${widget.pin}`;
+        if (!subscribedTopicsRef.current.has(topic)) {
+          try {
+            ws.send(JSON.stringify({ type: "subscribe", topic }));
+            subscribedTopicsRef.current.add(topic);
+          } catch (e) {
+            console.error("WebSocket subscribe error:", e);
+          }
+        }
       });
     };
 
@@ -465,19 +513,31 @@ export default function OrganizationsId() {
     ws.onerror = (err) => console.error("WebSocket error:", err);
     ws.onclose = () => console.log("WebSocket closed");
 
-    return () => ws.close();
-  }, []);
+    return () => {
+      try {
+        ws.close();
+      } catch (e) {
+        // ignore
+      }
+      wsRef.current = null;
+      subscribedTopicsRef.current.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsUrl]);
 
-  // Jika widgets baru muncul, bisa subscribe tanpa menutup WS
+  // When widgetsBoxes changes, subscribe to new topics if WS is open
   useEffect(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       widgetsBoxes.forEach((widget) => {
-        const subscribeMsg = {
-          type: "subscribe",
-          topic: `device-id/${widget.device_id}/pin/${widget.pin}`,
-        };
-        if (!wsRef.current) return;
-        wsRef.current.send(JSON.stringify(subscribeMsg));
+        const topic = `device-id/${widget.device_id}/pin/${widget.pin}`;
+        if (!subscribedTopicsRef.current.has(topic) && wsRef.current) {
+          try {
+            wsRef.current.send(JSON.stringify({ type: "subscribe", topic }));
+            subscribedTopicsRef.current.add(topic);
+          } catch (e) {
+            console.error("WebSocket subscribe error:", e);
+          }
+        }
       });
     }
   }, [widgetsBoxes]);
@@ -655,6 +715,7 @@ export default function OrganizationsId() {
                 const min = w.min_value ?? 0;
                 const max = w.max_value ?? 100;
                 const value = w.realTimeValue ?? w.default_value ?? 0;
+                const time = w.realTimeTime;
 
                 const percent = Math.min(Math.max(value, min), max);
                 const data = [
@@ -735,9 +796,14 @@ export default function OrganizationsId() {
                         </div>
 
                         {/* Value */}
-                        <p className="fs-3 fw-bold text-dark mt-3 mb-1">
+                        <p className="fs-3 fw-bold text-dark mt-3">
                           {value}
                           {w.unit ?? ""}
+                        </p>
+                        <p className="fw-semibold text-muted small">
+                          {time
+                            ? `(${new Date(time).toLocaleString()})`
+                            : "(Tidak ada data yang datang)"}
                         </p>
 
                         {/* Device Info */}
@@ -822,60 +888,69 @@ export default function OrganizationsId() {
                       </div>
                       <div className="mb-3">
                         <label
-                          htmlFor="widgetBoxUnitEdit"
+                          htmlFor="widgetBoxMinEdit"
                           className="form-label"
                         >
                           Nilai Minimal
                         </label>
                         <input
-                          id="widgetBoxUnitEdit"
+                          id="widgetBoxMinEdit"
                           type="number"
                           className="form-control"
                           value={editWidget.min_value ?? ""}
                           onChange={(e) =>
                             setEditWidget({
                               ...editWidget,
-                              min_value: Number(e.target.value),
+                              min_value:
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value),
                             })
                           }
                         />
                       </div>
                       <div className="mb-3">
                         <label
-                          htmlFor="widgetBoxUnitEdit"
+                          htmlFor="widgetBoxMaxEdit"
                           className="form-label"
                         >
                           Nilai Maksimal
                         </label>
                         <input
-                          id="widgetBoxUnitEdit"
+                          id="widgetBoxMaxEdit"
                           type="number"
                           className="form-control"
                           value={editWidget.max_value ?? ""}
                           onChange={(e) =>
                             setEditWidget({
                               ...editWidget,
-                              max_value: Number(e.target.value),
+                              max_value:
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value),
                             })
                           }
                         />
                       </div>
                       <div className="mb-3">
                         <label
-                          htmlFor="widgetBoxUnitEdit"
+                          htmlFor="widgetBoxDefaultEdit"
                           className="form-label"
                         >
                           Nilai Default (jika tidak ada data real-time)
                         </label>
                         <input
-                          id="widgetBoxUnitEdit"
+                          id="widgetBoxDefaultEdit"
                           type="number"
                           className="form-control"
                           value={editWidget.default_value ?? ""}
                           onChange={(e) =>
                             setEditWidget({
                               ...editWidget,
-                              default_value: Number(e.target.value),
+                              default_value:
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value),
                             })
                           }
                         />
@@ -1007,12 +1082,7 @@ export default function OrganizationsId() {
                               }
                             />
                             <Legend />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="#007bff"
-                              dot={false}
-                            />
+                            <Line type="monotone" dataKey="value" dot={false} />
                           </LineChart>
                         </ResponsiveContainer>
                       ) : (

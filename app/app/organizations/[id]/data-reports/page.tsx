@@ -165,7 +165,9 @@ export default function OrganizationsIdDataReports() {
           key={device.id}
           className="mb-8 border p-4 rounded bg-white shadow"
         >
-          <h2 className="text-lg font-semibold mb-2">Device: {device.name}</h2>
+          <h2 className="text-lg font-semibold mb-2">
+            Perangkat: {device.name}
+          </h2>
 
           {device.pin && device.pin.length > 0 ? (
             device.pin.map((p) => {

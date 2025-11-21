@@ -458,44 +458,39 @@ export default function OrganizationsIdProfile() {
           <form onSubmit={handleUpdateProfile}>
             <div className="mb-2">
               <label>
+                Nama
                 <input
                   type="text"
                   className="form-control"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-                {/*
-                 */}
-                Nama
               </label>
             </div>
             <div className="mb-2">
               <label>
+                Deskripsi
                 <textarea
                   className="form-control"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
-                {/*
-                 */}
-                Deskripsi
               </label>
             </div>
             <div className="mb-2">
               <label>
+                Lokasi
                 <input
                   type="text"
                   className="form-control"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                 />
-                {/*
-                 */}
-                Lokasi
               </label>
             </div>
             <div className="mb-2">
               <label>
+                Gambar Profil
                 <input
                   type="file"
                   className="form-control"
@@ -503,9 +498,6 @@ export default function OrganizationsIdProfile() {
                     setPictureFile(e.target.files ? e.target.files[0] : null)
                   }
                 />
-                {/*
-                 */}
-                Gambar
               </label>
             </div>
             <button type="submit" className="btn btn-success me-2">

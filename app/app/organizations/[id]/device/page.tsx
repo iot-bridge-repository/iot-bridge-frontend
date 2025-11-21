@@ -260,7 +260,7 @@ export default function OrganizationsIdDevice() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label htmlFor="deviceName" className="form-label">
-                    Nama Device
+                    Nama Perangkat
                   </label>
                   <input
                     type="text"
