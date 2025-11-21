@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
@@ -15,8 +14,8 @@ import {
   RadialBar,
   PolarAngleAxis,
 } from "recharts";
-
-import { useModalAlert } from "@/src/context/ModalAlertContext";
+import { useModalAlert } from "@/src/contexts/ModalAlertContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 interface Device {
   id: string;
@@ -54,8 +53,7 @@ export default function OrganizationsId() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
-  const authToken =
-    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken = useAuth().authToken;
 
   const { showAlert } = useModalAlert();
 

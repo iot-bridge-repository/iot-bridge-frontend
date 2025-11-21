@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-
-import { useModalAlert } from "@/src/context/ModalAlertContext";
+import { useModalAlert } from "@/src/contexts/ModalAlertContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 interface OrganizationProfile {
   id: string;
@@ -16,8 +16,7 @@ interface OrganizationProfile {
 export default function OrganizationsIdProfile() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken =
-    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken = useAuth().authToken;
 
   const { showAlert } = useModalAlert();
 

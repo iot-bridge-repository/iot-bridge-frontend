@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useModalAlert } from "@/src/context/ModalAlertContext";
+import { useModalAlert } from "@/src/contexts/ModalAlertContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 interface Organization {
   id: string;
@@ -10,8 +11,7 @@ interface Organization {
 
 export default function Organizations() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken =
-    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken = useAuth().authToken;
 
   const { showAlert } = useModalAlert();
 

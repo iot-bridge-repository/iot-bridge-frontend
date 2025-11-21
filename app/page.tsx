@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import ForgotPasswordForm from "./components/ForgotPasswordForm";
-import { useModalAlert } from "@/src/context/ModalAlertContext";
+import { useModalAlert } from "@/src/contexts/ModalAlertContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function RootPage() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [form, setForm] = useState<"login" | "register" | "forgot_password">(
     "login"
   );
+  const { setAuthToken, authToken, loadingGetAuthToken } = useAuth();
 
   const { showAlert } = useModalAlert();
 
@@ -43,7 +45,9 @@ export default function RootPage() {
 
       const resJson = await res.json();
       if (res.ok) {
-        localStorage.setItem("authToken", resJson.data.token);
+        sessionStorage.setItem("authToken", resJson.data.token);
+        setAuthToken(resJson.data.token);
+
         window.location.href = "/app";
       } else {
         showAlert("Login gagal", resJson.message || "Login gagal, coba lagi.");
@@ -138,9 +142,12 @@ export default function RootPage() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) globalThis.location.href = "/app";
-  }, []);
+    if (!loadingGetAuthToken && authToken) {
+      window.location.href = "/app";
+    }
+  }, [loadingGetAuthToken, authToken]);
+
+  if (loadingGetAuthToken) return null;
 
   return (
     <>

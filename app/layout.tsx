@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { ModalAlertProvider } from "@/src/context/ModalAlertContext";
+import { ModalAlertProvider } from "@/src/contexts/ModalAlertContext";
+import { AuthProvider } from "@/src/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ModalAlertProvider>{children}</ModalAlertProvider>
+        <AuthProvider>
+          <ModalAlertProvider>{children}</ModalAlertProvider>
+        </AuthProvider>
 
         {/* Bootstrap JS + Popper (non-blocking) */}
         <Script

@@ -1,16 +1,21 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { authToken, loadingGetAuthToken } = useAuth();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) window.location.href = "/";
-  }, []);
+    if (!loadingGetAuthToken && !authToken) {
+      window.location.href = "/";
+    }
+  }, [loadingGetAuthToken, authToken]);
+
+  if (loadingGetAuthToken) return null;
 
   return (
     <div className="flex h-screen">

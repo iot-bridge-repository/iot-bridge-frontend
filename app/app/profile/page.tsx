@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useModalAlert } from "@/src/context/ModalAlertContext";
+import { useModalAlert } from "@/src/contexts/ModalAlertContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function Profile() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken =
-    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken = useAuth().authToken;
 
   const { showAlert } = useModalAlert();
 
@@ -174,9 +174,19 @@ export default function Profile() {
   };
 
   // Logout
+  const { setAuthToken } = useAuth();
   const handleLogOut = () => {
-    localStorage.removeItem("authToken");
-    window.location.href = "/";
+    try {
+      sessionStorage.removeItem("authToken");
+      setAuthToken(null);
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Logout error:", err);
+      showAlert(
+        "Mohon maaf :(",
+        "Terjadi kesalahan pada server atau jaringan."
+      );
+    }
   };
 
   if (loading) return <p className="text-center mt-5">Loading...</p>;

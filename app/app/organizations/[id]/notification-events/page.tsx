@@ -1,9 +1,8 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-
-import { useModalAlert } from "@/src/context/ModalAlertContext";
+import { useModalAlert } from "@/src/contexts/ModalAlertContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 interface Device {
   id: string;
@@ -27,8 +26,7 @@ interface NotificationEvents {
 export default function OrganizationsIdNotificationEvents() {
   const { id } = useParams();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const authToken =
-    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const authToken = useAuth().authToken;
 
   const { showAlert } = useModalAlert();
 
