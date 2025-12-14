@@ -203,7 +203,7 @@ export default function OrganizationsIdNotificationEvents() {
             subject: editNotificationEvents.subject,
             message: editNotificationEvents.message,
             comparison_type: editNotificationEvents.comparison_type,
-            threshold_value: editNotificationEvents.threshold_value,
+            threshold_value: editNotificationEvents.threshold_value?.toString(),
             is_active: editNotificationEvents.is_active,
           }),
         }
@@ -465,13 +465,13 @@ export default function OrganizationsIdNotificationEvents() {
                     })
                   }
                 >
-                  <option value="">Pilih Comparison Type</option>
-                  <option value=">">Greater Than</option>
-                  <option value="<">Less Than</option>
-                  <option value="=">Equal To</option>
-                  <option value=">=">Greater Than or Equal To</option>
-                  <option value="<=">Less Than or Equal To</option>
-                  <option value="!=">Not Equal To</option>
+                  <option value="">Pilih Jenis Perbandingan</option>
+                  <option value=">">{">"}</option>
+                  <option value="<">{"<"}</option>
+                  <option value="=">{"="}</option>
+                  <option value=">=">{">="}</option>
+                  <option value="<=">{"<="}</option>
+                  <option value="!=">{"!="}</option>
                 </select>
 
                 <select
@@ -590,13 +590,13 @@ export default function OrganizationsIdNotificationEvents() {
                       })
                     }
                   >
-                    <option value="">Pilih Comparison Type</option>
-                    <option value=">">Greater Than</option>
-                    <option value="<">Less Than</option>
-                    <option value="=">Equal To</option>
-                    <option value=">=">Greater Than or Equal To</option>
-                    <option value="<=">Less Than or Equal To</option>
-                    <option value="!=">Not Equal To</option>
+                    <option value="">Pilih Jenis Perbandingan</option>
+                    <option value=">">{">"}</option>
+                    <option value="<">{"<"}</option>
+                    <option value="=">{"="}</option>
+                    <option value=">=">{">="}</option>
+                    <option value="<=">{"<="}</option>
+                    <option value="!=">{"!="}</option>
                   </select>
 
                   <select
